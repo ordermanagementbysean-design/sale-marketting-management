@@ -1,0 +1,50 @@
+{
+  "languages": {
+    "vi": "Tiếng Việt",
+    "en": "English"
+  },
+  "layout": {
+    "sidebar": {
+      "appName": "Sale Marketing",
+      "overview": "Overview",
+      "orders": "Orders"
+    },
+    "header": {
+      "overview": "Overview",
+      "orders": "Order Management",
+      "admin": "Admin"
+    }
+  },
+  "orders": {
+    "columns": {
+      "id": "ID",
+      "orderCode": "Order Code",
+      "customer": "Customer",
+      "phone": "Phone",
+      "status": "Status",
+      "amount": "Amount",
+      "fee": "Fee"
+    },
+    "statusLabel": "Status",
+    "statusAll": "All",
+    "statusDelivered": "Delivered",
+    "statusTransporting": "Transporting",
+    "statusCancel": "Cancelled",
+    "refresh": "Refresh",
+    "loadError": "Failed to load orders. Please try again."
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "totalOrders": "Total Orders",
+    "totalOrdersSub": "All orders",
+    "pending": "Pending",
+    "pendingSub": "New / Pending confirmation",
+    "transporting": "In transit",
+    "transportingSub": "In delivery",
+    "delivered": "Delivered",
+    "deliveredSub": "Completed",
+    "quickAccess": "Quick access",
+    "quickAccessDesc": "Manage orders, view status and print.",
+    "viewOrders": "View orders"
+  }
+}

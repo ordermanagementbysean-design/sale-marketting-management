@@ -1,0 +1,12 @@
+# Node
+frontend/node_modules
+frontend/build
+frontend/.env
+
+# Laravel
+backend/vendor
+backend/.env
+backend/storage/*.key
+
+# OS
+.DS_Store

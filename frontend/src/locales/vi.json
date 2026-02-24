@@ -1,0 +1,50 @@
+{
+  "languages": {
+    "vi": "Tiếng Việt",
+    "en": "English"
+  },
+  "layout": {
+    "sidebar": {
+      "appName": "Sale Marketing",
+      "overview": "Tổng quan",
+      "orders": "Đơn hàng"
+    },
+    "header": {
+      "overview": "Tổng quan",
+      "orders": "Quản lý đơn hàng",
+      "admin": "Admin"
+    }
+  },
+  "orders": {
+    "columns": {
+      "id": "ID",
+      "orderCode": "Mã đơn",
+      "customer": "Khách hàng",
+      "phone": "Số điện thoại",
+      "status": "Trạng thái",
+      "amount": "Tổng tiền",
+      "fee": "Phí"
+    },
+    "statusLabel": "Trạng thái",
+    "statusAll": "Tất cả",
+    "statusDelivered": "Đã giao",
+    "statusTransporting": "Đang vận chuyển",
+    "statusCancel": "Đã hủy",
+    "refresh": "Làm mới",
+    "loadError": "Không tải được danh sách đơn hàng. Vui lòng thử lại."
+  },
+  "dashboard": {
+    "welcome": "Chào mừng trở lại",
+    "totalOrders": "Tổng đơn hàng",
+    "totalOrdersSub": "Tất cả đơn",
+    "pending": "Chờ xử lý",
+    "pendingSub": "Đơn mới / chờ xác nhận",
+    "transporting": "Đang giao",
+    "transportingSub": "Đang vận chuyển",
+    "delivered": "Đã giao",
+    "deliveredSub": "Hoàn thành",
+    "quickAccess": "Truy cập nhanh",
+    "quickAccessDesc": "Quản lý đơn hàng, xem trạng thái và in đơn.",
+    "viewOrders": "Xem đơn hàng"
+  }
+}
