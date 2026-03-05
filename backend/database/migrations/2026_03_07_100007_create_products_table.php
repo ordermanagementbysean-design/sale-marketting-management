@@ -18,7 +18,7 @@ return new class extends Migration
             $table->decimal('vat_percent', 5, 2)->default(0);
             $table->string('vat_code')->nullable();
             $table->unsignedInteger('weight_gram')->default(0);
-            $table->unsignedTinyInteger('status')->default(1); // 0: disable, 1: đang kinh doanh
+            $table->unsignedTinyInteger('status')->default(1);
             $table->timestamps();
         });
     }

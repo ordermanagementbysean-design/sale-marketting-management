@@ -11,9 +11,10 @@ return new class extends Migration
         Schema::create('product_visibility', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->string('role', 50); // marketing, telesale, telesale_leader, customer_service
-            $table->boolean('allow_all')->default(true); // true = all staff in role, false = only specific users
+            $table->string('role', 50);
+            $table->boolean('allow_all')->default(true);
             $table->unique(['product_id', 'role']);
+            $table->timestamps();
         });
 
         Schema::create('product_visibility_users', function (Blueprint $table) {

@@ -36,6 +36,17 @@ class Product extends Model
         ];
     }
 
+    public function salePeriods(): HasMany
+    {
+        return $this->hasMany(ProductSalePeriod::class, 'product_id')->orderBy('start_at');
+    }
+
+    /** All ad links across all sale periods (for backward compatibility). */
+    public function adLinks(): HasMany
+    {
+        return $this->hasMany(ProductAdLink::class, 'product_id');
+    }
+
     public function editLogs(): HasMany
     {
         return $this->hasMany(ProductEditLog::class)->orderByDesc('created_at');

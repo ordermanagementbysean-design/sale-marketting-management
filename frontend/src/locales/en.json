@@ -19,6 +19,8 @@
       "overview": "Overview",
       "orders": "Orders",
       "products": "Products",
+      "salePeriodList": "Product sale periods",
+      "addSalePeriod": "Add product sale period",
       "users": "Users",
       "profile": "My profile"
     },
@@ -26,6 +28,8 @@
       "overview": "Overview",
       "orders": "Order Management",
       "products": "Product Management",
+      "salePeriodList": "Product sale periods",
+      "addSalePeriod": "Add product sale period",
       "users": "User Management",
       "profile": "My profile",
       "admin": "Admin"
@@ -105,6 +109,64 @@
       "sale": "Sale (Telesale & Telesale Leader)",
       "customer_service": "Customer Service"
     },
+    "salePeriodTitle": "Sale period",
+    "salePeriodsTitle": "Sale periods",
+    "salePeriodsDesc": "A product can have multiple sale periods; ad links are attached to each period.",
+    "noSalePeriods": "No sale periods yet.",
+    "addSalePeriod": "Add sale period",
+    "editSalePeriod": "Edit sale period",
+    "createSalePeriod": "Create sale period",
+    "salePeriodOverlapError": "This date range overlaps with another sale period.",
+    "salePeriodDeleteConfirm": "Delete this sale period? Ad links in this period will be affected.",
+    "addSalePeriodFirst": "Create at least one sale period before adding ad links.",
+    "salePeriodList": {
+      "product": "Product",
+      "adLinks": "Ad links",
+      "loadError": "Failed to load sale periods.",
+      "addSalePeriod": "Add sale period"
+    },
+    "addSalePeriodPage": {
+      "title": "Add product sale period",
+      "subtitle": "Select product, sale period dates and optionally add an ad link.",
+      "product": "Product",
+      "selectProduct": "Select product",
+      "searchProductPlaceholder": "Type name or code to search...",
+      "noProductsFound": "No products found",
+      "adLinkSection": "Ad link (optional)",
+      "adLinkSectionDesc": "You can add one ad link for this period right after creating it.",
+      "adLinkOptional": "Leave blank to skip",
+      "submit": "Create sale period",
+      "reset": "Clear form",
+      "backToProducts": "Back to products",
+      "noPermission": "You do not have permission to add product sale periods.",
+      "periodCreated": "Sale period created.",
+      "periodAndAdLinkCreated": "Sale period and ad link created.",
+      "adLinkCreateError": "Sale period created but failed to add ad link."
+    },
+    "salePeriods": {
+      "startAt": "Start date",
+      "endAt": "End date"
+    },
+    "adLinksTitle": "Ad links & Metrics",
+    "addAdLink": "Add ad link",
+    "editAdLink": "Edit ad link",
+    "createAdLink": "Create",
+    "noAdLinks": "No ad links yet.",
+    "adLinkDeleteConfirm": "Delete this ad link?",
+    "adLinks": {
+      "name": "Name",
+      "salePeriod": "Sale period",
+      "adUrl": "Ad URL",
+      "adIdentifier": "Ad ID",
+      "clicks": "Clicks",
+      "adCost": "Ad cost"
+    },
+    "metrics": {
+      "conversionRate": "Conversion Rate",
+      "cpo": "CPO",
+      "roas": "ROAS",
+      "profit": "Profit"
+    },
     "fields": {
       "name": "Product name",
       "code": "Product code",
@@ -114,7 +176,9 @@
       "vatPercent": "VAT (%)",
       "vatCode": "VAT code",
       "weightGram": "Weight (gram)",
-      "status": "Status"
+      "status": "Status",
+      "saleStartAt": "Start date",
+      "saleEndAt": "End date"
     }
   },
   "dashboard": {

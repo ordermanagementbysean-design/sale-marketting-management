@@ -30,6 +30,8 @@ const pathToTitleKey: Record<string, string> = {
   "/": "layout.header.overview",
   "/orders": "layout.header.orders",
   "/products": "layout.header.products",
+  "/products/sale-periods": "layout.header.salePeriodList",
+  "/products/add-sale-period": "layout.header.addSalePeriod",
   "/users": "layout.header.users",
   "/profile": "layout.header.profile",
   "/profile/change-password": "users.changePasswordTitle",

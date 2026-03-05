@@ -40,7 +40,8 @@ return [
         'base_url' => env('GHTK_BASE_URL'),
     ],
     'facebook' => [
-        'token'    => env('FB_ACCESS_TOKEN'),
-        'base_url' => env('FB_BASE_URL'),
+        'token'        => env('FB_ACCESS_TOKEN'),
+        'base_url'     => env('FB_BASE_URL'),
+        'verify_token' => env('FB_LEADGEN_VERIFY_TOKEN'),
     ],
 ];

@@ -10,16 +10,18 @@ import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
+import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
 import { useAuth } from "@/features/auth/context/AuthContext";
 
 const SIDEBAR_WIDTH = 260;
 
 const allMenuItems = [
-  { path: "/", labelKey: "layout.sidebar.overview", icon: <DashboardOutlinedIcon />, requireManageUsers: false },
-  { path: "/orders", labelKey: "layout.sidebar.orders", icon: <ShoppingCartOutlinedIcon />, requireManageUsers: false },
-  { path: "/products", labelKey: "layout.sidebar.products", icon: <Inventory2OutlinedIcon />, requireManageUsers: false },
-  { path: "/users", labelKey: "layout.sidebar.users", icon: <PeopleOutlinedIcon />, requireManageUsers: true },
-  { path: "/profile", labelKey: "layout.sidebar.profile", icon: <PersonOutlinedIcon />, requireManageUsers: false },
+  { path: "/", labelKey: "layout.sidebar.overview", icon: <DashboardOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
+  { path: "/orders", labelKey: "layout.sidebar.orders", icon: <ShoppingCartOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
+  { path: "/products", labelKey: "layout.sidebar.products", icon: <Inventory2OutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
+  { path: "/products/sale-periods", labelKey: "layout.sidebar.salePeriodList", icon: <CalendarMonthOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
+  { path: "/users", labelKey: "layout.sidebar.users", icon: <PeopleOutlinedIcon />, requireManageUsers: true, requireEditProducts: false },
+  { path: "/profile", labelKey: "layout.sidebar.profile", icon: <PersonOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
 ] as const;
 
 const rootSx: SxProps<Theme> = {
@@ -51,7 +53,7 @@ const itemIconSx: SxProps<Theme> = { minWidth: 40 };
 
 const SidebarComponent = () => {
   const { t } = useTranslation();
-  const { canManageUsers } = useAuth();
+  const { canManageUsers, canEditProducts } = useAuth();
   const navigate = useNavigate();
   const pathname = useLocation().pathname;
 
@@ -65,9 +67,9 @@ const SidebarComponent = () => {
   const menuItems = useMemo(
     () =>
       allMenuItems
-        .filter((item) => !item.requireManageUsers || canManageUsers)
+        .filter((item) => (!item.requireManageUsers || canManageUsers) && (!item.requireEditProducts || canEditProducts))
         .map((item) => ({ ...item, label: t(item.labelKey) })),
-    [t, canManageUsers]
+    [t, canManageUsers, canEditProducts]
   );
 
   return (

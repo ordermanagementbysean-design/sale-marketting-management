@@ -1,10 +1,17 @@
 import axiosClient from "@/shared/utils/axios";
 import type {
+  CreateProductAdLinkPayload,
+  CreateProductSalePeriodPayload,
   Product,
+  ProductAdLink,
   ProductFilters,
+  ProductSalePeriod,
   ProductVisibilityPayload,
   ProductWithLogs,
+  SalePeriodListItem,
+  UpdateProductAdLinkPayload,
   UpdateProductPayload,
+  UpdateProductSalePeriodPayload,
 } from "../types";
 
 interface LaravelPaginatedResponse<T> {
@@ -59,4 +66,87 @@ export async function updateProductVisibility(
     payload
   );
   return data;
+}
+
+export async function getSalePeriodsList(): Promise<SalePeriodListItem[]> {
+  const { data } = await axiosClient.get<SalePeriodListItem[]>("/api/sale-periods");
+  return data ?? [];
+}
+
+export async function getProductSalePeriods(
+  productId: number
+): Promise<ProductSalePeriod[]> {
+  const { data } = await axiosClient.get<ProductSalePeriod[]>(
+    `/api/products/${productId}/sale-periods`
+  );
+  return data ?? [];
+}
+
+export async function createProductSalePeriod(
+  productId: number,
+  payload: CreateProductSalePeriodPayload
+): Promise<ProductSalePeriod> {
+  const { data } = await axiosClient.post<ProductSalePeriod>(
+    `/api/products/${productId}/sale-periods`,
+    payload
+  );
+  return data;
+}
+
+export async function updateProductSalePeriod(
+  productId: number,
+  periodId: number,
+  payload: UpdateProductSalePeriodPayload
+): Promise<ProductSalePeriod> {
+  const { data } = await axiosClient.put<ProductSalePeriod>(
+    `/api/products/${productId}/sale-periods/${periodId}`,
+    payload
+  );
+  return data;
+}
+
+export async function deleteProductSalePeriod(
+  productId: number,
+  periodId: number
+): Promise<void> {
+  await axiosClient.delete(
+    `/api/products/${productId}/sale-periods/${periodId}`
+  );
+}
+
+export async function getProductAdLinks(productId: number): Promise<ProductAdLink[]> {
+  const { data } = await axiosClient.get<ProductAdLink[]>(
+    `/api/products/${productId}/ad-links`
+  );
+  return data ?? [];
+}
+
+export async function createProductAdLink(
+  productId: number,
+  payload: CreateProductAdLinkPayload
+): Promise<ProductAdLink> {
+  const { data } = await axiosClient.post<ProductAdLink>(
+    `/api/products/${productId}/ad-links`,
+    payload
+  );
+  return data;
+}
+
+export async function updateProductAdLink(
+  productId: number,
+  adLinkId: number,
+  payload: UpdateProductAdLinkPayload
+): Promise<ProductAdLink> {
+  const { data } = await axiosClient.put<ProductAdLink>(
+    `/api/products/${productId}/ad-links/${adLinkId}`,
+    payload
+  );
+  return data;
+}
+
+export async function deleteProductAdLink(
+  productId: number,
+  adLinkId: number
+): Promise<void> {
+  await axiosClient.delete(`/api/products/${productId}/ad-links/${adLinkId}`);
 }

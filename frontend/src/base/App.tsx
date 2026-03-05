@@ -7,6 +7,8 @@ import AdminLayout from "@/shared/layouts/AdminLayout";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage";
 import OrderPage from "@/features/orders/pages/OrderPage";
 import ProductPage from "@/features/products/pages/ProductPage";
+import AddSalePeriodPage from "@/features/products/pages/AddSalePeriodPage";
+import SalePeriodListPage from "@/features/products/pages/SalePeriodListPage";
 import ChangePasswordPage from "@/features/users/pages/ChangePasswordPage";
 import ProfilePage from "@/features/users/pages/ProfilePage";
 import UserPage from "@/features/users/pages/UserPage";
@@ -28,6 +30,8 @@ const App = memo(function App() {
             <Route index element={<DashboardPage />} />
             <Route path="orders" element={<OrderPage />} />
             <Route path="products" element={<ProductPage />} />
+            <Route path="products/sale-periods" element={<SalePeriodListPage />} />
+            <Route path="products/add-sale-period" element={<AddSalePeriodPage />} />
             <Route path="users" element={<UserPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="profile/change-password" element={<ChangePasswordPage />} />

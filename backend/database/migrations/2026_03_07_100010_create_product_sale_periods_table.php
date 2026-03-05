@@ -8,17 +8,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('product_edit_logs', function (Blueprint $table) {
+        Schema::create('product_sale_periods', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->json('changes'); // e.g. {"name": {"old": "A", "new": "B"}, "unit_price": {"old": 100, "new": 120}}
-            $table->timestamp('created_at');
+            $table->date('start_at');
+            $table->date('end_at');
+            $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('product_edit_logs');
+        Schema::dropIfExists('product_sale_periods');
     }
 };

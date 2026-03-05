@@ -42,7 +42,13 @@ class ProductController extends Controller
             abort(403, 'You do not have permission to view this product.');
         }
 
-        $product->load(['editLogs.user:id,name,email', 'visibilityRules', 'allowedUsers:id,name,email,role']);
+        $product->load([
+            'editLogs.user:id,name,email',
+            'visibilityRules',
+            'allowedUsers:id,name,email,role',
+            'salePeriods' => fn ($q) => $q->with(['adLinks' => fn ($aq) => $aq->with(['orders.product'])]),
+        ]);
+        $product->setRelation('adLinks', $product->salePeriods->flatMap->adLinks);
 
         return response()->json($product);
     }
@@ -54,15 +60,15 @@ class ProductController extends Controller
         }
 
         $validated = $request->validate([
-            'name'          => ['sometimes', 'string', 'max:255'],
-            'code'          => ['sometimes', 'string', 'max:100', 'unique:products,code,' . $product->id],
-            'unit'          => ['sometimes', 'string', 'max:50'],
+            'name'           => ['sometimes', 'string', 'max:255'],
+            'code'           => ['sometimes', 'string', 'max:100', 'unique:products,code,' . $product->id],
+            'unit'           => ['sometimes', 'string', 'max:50'],
             'purchase_price' => ['sometimes', 'numeric', 'min:0'],
-            'unit_price'    => ['sometimes', 'numeric', 'min:0'],
-            'vat_percent'   => ['sometimes', 'numeric', 'min:0', 'max:100'],
-            'vat_code'      => ['sometimes', 'nullable', 'string', 'max:50'],
-            'weight_gram'   => ['sometimes', 'integer', 'min:0'],
-            'status'        => ['sometimes', 'integer', 'in:0,1'],
+            'unit_price'     => ['sometimes', 'numeric', 'min:0'],
+            'vat_percent'    => ['sometimes', 'numeric', 'min:0', 'max:100'],
+            'vat_code'       => ['sometimes', 'nullable', 'string', 'max:50'],
+            'weight_gram'    => ['sometimes', 'integer', 'min:0'],
+            'status'         => ['sometimes', 'integer', 'in:0,1'],
         ]);
 
         $changes = [];

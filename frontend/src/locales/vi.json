@@ -19,6 +19,8 @@
       "overview": "Tổng quan",
       "orders": "Đơn hàng",
       "products": "Sản phẩm",
+      "salePeriodList": "Danh sách đợt bán sản phẩm",
+      "addSalePeriod": "Thêm đợt bán sản phẩm",
       "users": "Người dùng",
       "profile": "Hồ sơ của tôi"
     },
@@ -26,6 +28,8 @@
       "overview": "Tổng quan",
       "orders": "Quản lý đơn hàng",
       "products": "Quản lý sản phẩm",
+      "salePeriodList": "Danh sách đợt bán sản phẩm",
+      "addSalePeriod": "Thêm đợt bán sản phẩm",
       "users": "Quản lý người dùng",
       "profile": "Hồ sơ của tôi",
       "admin": "Admin"
@@ -105,6 +109,64 @@
       "sale": "Sale (Telesale & Telesale Leader)",
       "customer_service": "Customer Service"
     },
+    "salePeriodTitle": "Khoảng thời gian có thể bán",
+    "salePeriodsTitle": "Các đợt bán",
+    "salePeriodsDesc": "Mỗi sản phẩm có thể có nhiều đợt bán; link ads gắn với từng đợt.",
+    "noSalePeriods": "Chưa có đợt bán nào.",
+    "addSalePeriod": "Thêm đợt bán",
+    "editSalePeriod": "Sửa đợt bán",
+    "createSalePeriod": "Tạo đợt bán",
+    "salePeriodOverlapError": "Khoảng thời gian trùng với một đợt bán khác.",
+    "salePeriodDeleteConfirm": "Xóa đợt bán này? Các link ads thuộc đợt sẽ bị ảnh hưởng.",
+    "addSalePeriodFirst": "Tạo ít nhất một đợt bán trước khi thêm link ads.",
+    "salePeriodList": {
+      "product": "Sản phẩm",
+      "adLinks": "Link ads",
+      "loadError": "Không tải được danh sách đợt bán.",
+      "addSalePeriod": "Thêm đợt bán"
+    },
+    "addSalePeriodPage": {
+      "title": "Thêm đợt bán sản phẩm",
+      "subtitle": "Chọn sản phẩm, thời gian bán và tùy chọn thêm link ads.",
+      "product": "Sản phẩm",
+      "selectProduct": "Chọn sản phẩm",
+      "searchProductPlaceholder": "Nhập tên hoặc mã SP để tìm...",
+      "noProductsFound": "Không tìm thấy sản phẩm",
+      "adLinkSection": "Link ads (tùy chọn)",
+      "adLinkSectionDesc": "Có thể thêm một link ads gắn với đợt bán này ngay sau khi tạo.",
+      "adLinkOptional": "Để trống nếu chưa thêm link",
+      "submit": "Tạo đợt bán",
+      "reset": "Xóa form",
+      "backToProducts": "Về danh sách sản phẩm",
+      "noPermission": "Bạn không có quyền thêm đợt bán sản phẩm.",
+      "periodCreated": "Đã tạo đợt bán.",
+      "periodAndAdLinkCreated": "Đã tạo đợt bán và link ads.",
+      "adLinkCreateError": "Tạo đợt bán thành công nhưng thêm link ads thất bại."
+    },
+    "salePeriods": {
+      "startAt": "Từ ngày",
+      "endAt": "Đến ngày"
+    },
+    "adLinksTitle": "Link ads & Chỉ số",
+    "addAdLink": "Thêm link ads",
+    "editAdLink": "Sửa link ads",
+    "createAdLink": "Tạo",
+    "noAdLinks": "Chưa có link ads.",
+    "adLinkDeleteConfirm": "Xóa link ads này?",
+    "adLinks": {
+      "name": "Tên",
+      "salePeriod": "Đợt bán",
+      "adUrl": "Link ads",
+      "adIdentifier": "Mã ads (ID)",
+      "clicks": "Clicks",
+      "adCost": "Chi phí quảng cáo"
+    },
+    "metrics": {
+      "conversionRate": "Conversion Rate",
+      "cpo": "CPO",
+      "roas": "ROAS",
+      "profit": "Lợi nhuận"
+    },
     "fields": {
       "name": "Tên sản phẩm",
       "code": "Mã SP",
@@ -114,7 +176,9 @@
       "vatPercent": "VAT (%)",
       "vatCode": "Mã VAT",
       "weightGram": "Khối lượng (gram)",
-      "status": "Trạng thái"
+      "status": "Trạng thái",
+      "saleStartAt": "Từ ngày",
+      "saleEndAt": "Đến ngày"
     }
   },
   "dashboard": {

@@ -11,22 +11,36 @@ import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import Autocomplete from "@mui/material/Autocomplete";
+import IconButton from "@mui/material/IconButton";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import AddIcon from "@mui/icons-material/Add";
 import type { SxProps, Theme } from "@mui/material/styles";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import {
+  useCreateProductAdLink,
+  useCreateProductSalePeriod,
+  useDeleteProductAdLink,
+  useDeleteProductSalePeriod,
   useProduct,
   useProductEligibleUsers,
   useProducts,
   useUpdateProduct,
+  useUpdateProductAdLink,
+  useUpdateProductSalePeriod,
   useUpdateProductVisibility,
 } from "../hooks/productHooks";
-import type { Product, ProductWithLogs } from "../types";
+import type { Product, ProductAdLink, ProductSalePeriod, ProductWithLogs } from "../types";
 
 const VISIBILITY_DEPARTMENTS = ["marketing", "sale", "customer_service"] as const;
 type VisibilityDept = (typeof VISIBILITY_DEPARTMENTS)[number];
@@ -118,6 +132,12 @@ const ProductPageComponent = () => {
   const updateProductMutation = useUpdateProduct();
   const { data: eligibleUsers = [] } = useProductEligibleUsers(canEditProducts && dialogOpen);
   const updateVisibilityMutation = useUpdateProductVisibility();
+  const createAdLinkMutation = useCreateProductAdLink();
+  const updateAdLinkMutation = useUpdateProductAdLink();
+  const deleteAdLinkMutation = useDeleteProductAdLink();
+  const createPeriodMutation = useCreateProductSalePeriod();
+  const updatePeriodMutation = useUpdateProductSalePeriod();
+  const deletePeriodMutation = useDeleteProductSalePeriod();
 
   const [visibilitySelection, setVisibilitySelection] = useState<
     Record<VisibilityDept, VisibilityOption[]>
@@ -153,6 +173,21 @@ const ProductPageComponent = () => {
   const [formVatCode, setFormVatCode] = useState("");
   const [formWeightGram, setFormWeightGram] = useState("");
   const [formStatus, setFormStatus] = useState<0 | 1>(1);
+
+  const [periodDialogOpen, setPeriodDialogOpen] = useState(false);
+  const [editingPeriod, setEditingPeriod] = useState<ProductSalePeriod | null>(null);
+  const [periodStartAt, setPeriodStartAt] = useState("");
+  const [periodEndAt, setPeriodEndAt] = useState("");
+  const [periodError, setPeriodError] = useState("");
+
+  const [adLinkDialogOpen, setAdLinkDialogOpen] = useState(false);
+  const [adLinkSalePeriodId, setAdLinkSalePeriodId] = useState<number | "">("");
+  const [editingAdLink, setEditingAdLink] = useState<ProductAdLink | null>(null);
+  const [adLinkName, setAdLinkName] = useState("");
+  const [adLinkUrl, setAdLinkUrl] = useState("");
+  const [adLinkIdentifier, setAdLinkIdentifier] = useState("");
+  const [adLinkClicks, setAdLinkClicks] = useState("");
+  const [adLinkCost, setAdLinkCost] = useState("");
 
   const openEdit = useCallback((product: Product) => {
     setEditingProduct(product);
@@ -240,6 +275,94 @@ const ProductPageComponent = () => {
     refetch,
   ]);
 
+  const salePeriods = useMemo(
+    () => (productDetail as ProductWithLogs)?.sale_periods ?? [],
+    [productDetail]
+  );
+
+  const openAdLinkForm = useCallback(
+    (adLink?: ProductAdLink | null) => {
+      setEditingAdLink(adLink ?? null);
+      setAdLinkName(adLink?.name ?? "");
+      setAdLinkUrl(adLink?.ad_url ?? "");
+      setAdLinkIdentifier(adLink?.ad_identifier ?? "");
+      setAdLinkClicks(String(adLink?.clicks ?? 0));
+      setAdLinkCost(String(adLink?.ad_cost ?? 0));
+      setAdLinkSalePeriodId(
+        adLink?.product_sale_period_id ?? (salePeriods[0]?.id ?? "")
+      );
+      setAdLinkDialogOpen(true);
+    },
+    [salePeriods]
+  );
+  const closeAdLinkDialog = useCallback(() => {
+    setAdLinkDialogOpen(false);
+    setEditingAdLink(null);
+  }, []);
+  const handleSaveAdLink = useCallback(() => {
+    if (!editingProduct) return;
+    const clicks = Number(adLinkClicks) || 0;
+    const adCost = Number(adLinkCost) || 0;
+    if (editingAdLink) {
+      updateAdLinkMutation.mutate(
+        {
+          productId: editingProduct.id,
+          adLinkId: editingAdLink.id,
+          payload: {
+            ...(adLinkSalePeriodId !== "" && Number(adLinkSalePeriodId) !== editingAdLink.product_sale_period_id
+              ? { product_sale_period_id: Number(adLinkSalePeriodId) }
+              : {}),
+            name: adLinkName.trim(),
+            ad_url: adLinkUrl.trim() || null,
+            ad_identifier: adLinkIdentifier.trim() || null,
+            clicks,
+            ad_cost: adCost,
+          },
+        },
+        { onSuccess: closeAdLinkDialog }
+      );
+    } else {
+      if (typeof adLinkSalePeriodId !== "number") return;
+      createAdLinkMutation.mutate(
+        {
+          productId: editingProduct.id,
+          payload: {
+            product_sale_period_id: Number(adLinkSalePeriodId),
+            name: adLinkName.trim(),
+            ad_url: adLinkUrl.trim() || null,
+            ad_identifier: adLinkIdentifier.trim() || null,
+            clicks,
+            ad_cost: adCost,
+          },
+        },
+        { onSuccess: closeAdLinkDialog }
+      );
+    }
+  }, [
+    editingProduct,
+    editingAdLink,
+    adLinkSalePeriodId,
+    adLinkName,
+    adLinkUrl,
+    adLinkIdentifier,
+    adLinkClicks,
+    adLinkCost,
+    createAdLinkMutation,
+    updateAdLinkMutation,
+    closeAdLinkDialog,
+  ]);
+  const handleDeleteAdLink = useCallback(
+    (adLink: ProductAdLink) => {
+      if (!editingProduct || !window.confirm(t("products.adLinkDeleteConfirm")))
+        return;
+      deleteAdLinkMutation.mutate({
+        productId: editingProduct.id,
+        adLinkId: adLink.id,
+      });
+    },
+    [editingProduct, deleteAdLinkMutation, t]
+  );
+
   const handleSubmit = useCallback(() => {
     if (!editingProduct || !canEditProducts) return;
     const payload = {
@@ -272,6 +395,81 @@ const ProductPageComponent = () => {
     updateProductMutation,
     closeDialog,
   ]);
+
+  const openPeriodForm = useCallback((period?: ProductSalePeriod | null) => {
+    setEditingPeriod(period ?? null);
+    setPeriodStartAt(period ? period.start_at.slice(0, 10) : "");
+    setPeriodEndAt(period ? period.end_at.slice(0, 10) : "");
+    setPeriodError("");
+    setPeriodDialogOpen(true);
+  }, []);
+  const closePeriodDialog = useCallback(() => {
+    setPeriodDialogOpen(false);
+    setEditingPeriod(null);
+    setPeriodError("");
+  }, []);
+  const handleSavePeriod = useCallback(() => {
+    if (!editingProduct || !canEditProducts) return;
+    if (!periodStartAt.trim() || !periodEndAt.trim()) return;
+    setPeriodError("");
+    if (editingPeriod) {
+      updatePeriodMutation.mutate(
+        {
+          productId: editingProduct.id,
+          periodId: editingPeriod.id,
+          payload: { start_at: periodStartAt, end_at: periodEndAt },
+        },
+        {
+          onSuccess: closePeriodDialog,
+          onError: (err: Error) => {
+            const msg = (err as { response?: { data?: { message?: string } } }).response?.data?.message;
+            setPeriodError(msg ?? t("products.salePeriodOverlapError"));
+          },
+        }
+      );
+    } else {
+      createPeriodMutation.mutate(
+        {
+          productId: editingProduct.id,
+          payload: { start_at: periodStartAt, end_at: periodEndAt },
+        },
+        {
+          onSuccess: closePeriodDialog,
+          onError: (err: Error) => {
+            const msg = (err as { response?: { data?: { message?: string } } }).response?.data?.message;
+            setPeriodError(msg ?? t("products.salePeriodOverlapError"));
+          },
+        }
+      );
+    }
+  }, [
+    editingProduct,
+    canEditProducts,
+    editingPeriod,
+    periodStartAt,
+    periodEndAt,
+    createPeriodMutation,
+    updatePeriodMutation,
+    closePeriodDialog,
+    t,
+  ]);
+  const handleDeletePeriod = useCallback(
+    (period: ProductSalePeriod) => {
+      if (!editingProduct || !window.confirm(t("products.salePeriodDeleteConfirm")))
+        return;
+      deletePeriodMutation.mutate({
+        productId: editingProduct.id,
+        periodId: period.id,
+      });
+    },
+    [editingProduct, deletePeriodMutation, t]
+  );
+
+  const getPeriodLabel = useCallback((periodId: number | null) => {
+    if (periodId == null) return "–";
+    const p = salePeriods.find((sp) => sp.id === periodId);
+    return p ? `${p.start_at.slice(0, 10)} – ${p.end_at.slice(0, 10)}` : "–";
+  }, [salePeriods]);
 
   const columns = useMemo<GridColDef<Product>[]>(
     () => [
@@ -404,7 +602,7 @@ const ProductPageComponent = () => {
             value={formName}
             onChange={(e) => setFormName(e.target.value)}
             disabled={!canEditProducts}
-            sx={dialogFieldSx}
+            sx={{ ...dialogFieldSx, mt: 2 }}
           />
           <TextField
             fullWidth
@@ -482,6 +680,66 @@ const ProductPageComponent = () => {
               <MenuItem value={1}>{t("products.statusActive")}</MenuItem>
             </Select>
           </FormControl>
+          <Typography variant="subtitle2" sx={{ mt: 2, mb: 0.5 }}>
+            {t("products.salePeriodsTitle")}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            {t("products.salePeriodsDesc")}
+          </Typography>
+          <Box sx={{ mb: 2 }}>
+            {salePeriods.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                {t("products.noSalePeriods")}
+              </Typography>
+            ) : (
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>{t("products.salePeriods.startAt")}</TableCell>
+                    <TableCell>{t("products.salePeriods.endAt")}</TableCell>
+                    {canEditProducts && <TableCell width={120} />}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {salePeriods.map((period) => (
+                    <TableRow key={period.id}>
+                      <TableCell>{period.start_at.slice(0, 10)}</TableCell>
+                      <TableCell>{period.end_at.slice(0, 10)}</TableCell>
+                      {canEditProducts && (
+                        <TableCell>
+                          <IconButton
+                            size="small"
+                            onClick={() => openPeriodForm(period)}
+                            aria-label={t("products.edit")}
+                          >
+                            <EditOutlinedIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleDeletePeriod(period)}
+                            aria-label={t("users.delete")}
+                          >
+                            <DeleteOutlineIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+            {canEditProducts && (
+              <Button
+                size="small"
+                startIcon={<AddIcon />}
+                onClick={() => openPeriodForm(null)}
+                sx={{ mt: 0.5 }}
+              >
+                {t("products.addSalePeriod")}
+              </Button>
+            )}
+          </Box>
 
           {canEditProducts && (
             <>
@@ -546,8 +804,102 @@ const ProductPageComponent = () => {
                     )}
                   />
                 );
-              })}
+              }              )}
             </>
+          )}
+
+          <Typography variant="subtitle2" sx={{ mt: 2, mb: 0.5 }}>
+            {t("products.adLinksTitle")}
+          </Typography>
+          <Box sx={{ overflowX: "auto", mb: 2 }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>{t("products.adLinks.name")}</TableCell>
+                  <TableCell>{t("products.adLinks.salePeriod")}</TableCell>
+                  <TableCell>{t("products.adLinks.adUrl")}</TableCell>
+                  <TableCell align="right">{t("products.adLinks.clicks")}</TableCell>
+                  <TableCell align="right">{t("products.adLinks.adCost")}</TableCell>
+                  <TableCell align="right">{t("products.metrics.conversionRate")}</TableCell>
+                  <TableCell align="right">{t("products.metrics.cpo")}</TableCell>
+                  <TableCell align="right">{t("products.metrics.roas")}</TableCell>
+                  <TableCell align="right">{t("products.metrics.profit")}</TableCell>
+                  {canEditProducts && <TableCell width={80} />}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {(productDetail as ProductWithLogs)?.ad_links?.length
+                  ? (productDetail as ProductWithLogs).ad_links!.map((ad) => (
+                      <TableRow key={ad.id}>
+                        <TableCell>{ad.name}</TableCell>
+                        <TableCell>{getPeriodLabel(ad.product_sale_period_id)}</TableCell>
+                        <TableCell sx={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {ad.ad_url ?? "-"}
+                        </TableCell>
+                        <TableCell align="right">{ad.clicks}</TableCell>
+                        <TableCell align="right">
+                          {Number(ad.ad_cost).toLocaleString()}
+                        </TableCell>
+                        <TableCell align="right">
+                          {ad.metrics?.conversion_rate != null
+                            ? `${(ad.metrics.conversion_rate * 100).toFixed(2)}%`
+                            : "-"}
+                        </TableCell>
+                        <TableCell align="right">
+                          {ad.metrics?.cpo != null
+                            ? ad.metrics.cpo.toLocaleString()
+                            : "-"}
+                        </TableCell>
+                        <TableCell align="right">
+                          {ad.metrics?.roas != null ? ad.metrics.roas.toFixed(2) : "-"}
+                        </TableCell>
+                        <TableCell align="right">
+                          {ad.metrics?.profit != null
+                            ? ad.metrics.profit.toLocaleString()
+                            : "-"}
+                        </TableCell>
+                        {canEditProducts && (
+                          <TableCell>
+                            <IconButton
+                              size="small"
+                              onClick={() => openAdLinkForm(ad)}
+                              aria-label={t("products.edit")}
+                            >
+                              <EditOutlinedIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleDeleteAdLink(ad)}
+                              aria-label={t("users.delete")}
+                            >
+                              <DeleteOutlineIcon fontSize="small" />
+                            </IconButton>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))
+                  : (
+                      <TableRow>
+                        <TableCell colSpan={canEditProducts ? 10 : 9}>
+                          {t("products.noAdLinks")}
+                        </TableCell>
+                      </TableRow>
+                    )}
+              </TableBody>
+            </Table>
+          </Box>
+          {canEditProducts && (
+            <Button
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={() => openAdLinkForm(null)}
+              disabled={salePeriods.length === 0}
+              sx={{ mb: 2 }}
+              title={salePeriods.length === 0 ? t("products.addSalePeriodFirst") : undefined}
+            >
+              {t("products.addAdLink")}
+            </Button>
           )}
 
           <Typography variant="subtitle2" sx={{ mt: 2, mb: 0.5 }}>
@@ -606,6 +958,131 @@ const ProductPageComponent = () => {
               </Button>
             </>
           )}
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={periodDialogOpen} onClose={closePeriodDialog} maxWidth="xs" fullWidth>
+        <DialogTitle>
+          {editingPeriod ? t("products.editSalePeriod") : t("products.addSalePeriod")}
+        </DialogTitle>
+        <DialogContent>
+          {periodError && (
+            <Alert severity="error" sx={dialogFieldSx}>
+              {periodError}
+            </Alert>
+          )}
+          <TextField
+            fullWidth
+            type="date"
+            label={t("products.salePeriods.startAt")}
+            value={periodStartAt}
+            onChange={(e) => setPeriodStartAt(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            sx={dialogFieldSx}
+          />
+          <TextField
+            fullWidth
+            type="date"
+            label={t("products.salePeriods.endAt")}
+            value={periodEndAt}
+            onChange={(e) => setPeriodEndAt(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            sx={dialogFieldSx}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closePeriodDialog}>{t("users.cancel")}</Button>
+          <Button
+            variant="contained"
+            onClick={handleSavePeriod}
+            disabled={
+              !periodStartAt.trim() ||
+              !periodEndAt.trim() ||
+              createPeriodMutation.isPending ||
+              updatePeriodMutation.isPending
+            }
+          >
+            {editingPeriod ? t("users.save") : t("products.createSalePeriod")}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={adLinkDialogOpen} onClose={closeAdLinkDialog} maxWidth="xs" fullWidth>
+        <DialogTitle>
+          {editingAdLink ? t("products.editAdLink") : t("products.addAdLink")}
+        </DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth sx={dialogFieldSx} required={!editingAdLink}>
+            <InputLabel id="ad-link-period-label">{t("products.adLinks.salePeriod")}</InputLabel>
+            <Select<number>
+              labelId="ad-link-period-label"
+              label={t("products.adLinks.salePeriod")}
+              value={typeof adLinkSalePeriodId === "number" ? adLinkSalePeriodId : salePeriods[0]?.id ?? 0}
+              onChange={(e) => setAdLinkSalePeriodId(Number(e.target.value))}
+            >
+              {salePeriods.map((p) => (
+                <MenuItem key={p.id} value={p.id}>
+                  {p.start_at.slice(0, 10)} – {p.end_at.slice(0, 10)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField
+            fullWidth
+            label={t("products.adLinks.name")}
+            value={adLinkName}
+            onChange={(e) => setAdLinkName(e.target.value)}
+            sx={dialogFieldSx}
+          />
+          <TextField
+            fullWidth
+            label={t("products.adLinks.adUrl")}
+            value={adLinkUrl}
+            onChange={(e) => setAdLinkUrl(e.target.value)}
+            placeholder="https://..."
+            sx={dialogFieldSx}
+          />
+          <TextField
+            fullWidth
+            label={t("products.adLinks.adIdentifier")}
+            value={adLinkIdentifier}
+            onChange={(e) => setAdLinkIdentifier(e.target.value)}
+            placeholder="e.g. Facebook ad ID"
+            sx={dialogFieldSx}
+          />
+          <TextField
+            fullWidth
+            type="number"
+            label={t("products.adLinks.clicks")}
+            value={adLinkClicks}
+            onChange={(e) => setAdLinkClicks(e.target.value)}
+            inputProps={{ min: 0 }}
+            sx={dialogFieldSx}
+          />
+          <TextField
+            fullWidth
+            type="number"
+            label={t("products.adLinks.adCost")}
+            value={adLinkCost}
+            onChange={(e) => setAdLinkCost(e.target.value)}
+            inputProps={{ min: 0, step: 0.01 }}
+            sx={dialogFieldSx}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeAdLinkDialog}>{t("users.cancel")}</Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveAdLink}
+            disabled={
+              (!editingAdLink && (adLinkSalePeriodId === "" || typeof adLinkSalePeriodId !== "number")) ||
+              !adLinkName.trim() ||
+              createAdLinkMutation.isPending ||
+              updateAdLinkMutation.isPending
+            }
+          >
+            {editingAdLink ? t("users.save") : t("products.createAdLink")}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -11,9 +11,9 @@ return new class extends Migration
         Schema::create('connected_accounts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
-            $table->string('type'); // facebook, ghtk, ghn, shopee, tiktok
-            $table->string('name')->nullable(); // label: "Fanpage ABC", "GHTK chính"
-            $table->json('credentials'); // { access_token, base_url } | { token, base_url } ...
+            $table->string('type');
+            $table->string('name')->nullable();
+            $table->json('credentials');
             $table->timestamps();
         });
     }
