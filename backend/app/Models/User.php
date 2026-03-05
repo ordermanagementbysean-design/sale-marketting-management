@@ -39,6 +39,18 @@ class User extends Authenticatable
     }
 
     /**
+     * Whether this user can edit products (admin, manager, director).
+     */
+    public function canEditProducts(): bool
+    {
+        $role = $this->role instanceof UserRoleEnum
+            ? $this->role->value
+            : (string) $this->role;
+
+        return UserRoleEnum::canEditProducts($role);
+    }
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>

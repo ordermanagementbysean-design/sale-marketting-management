@@ -18,12 +18,14 @@
       "appName": "Sale Marketing",
       "overview": "Tổng quan",
       "orders": "Đơn hàng",
+      "products": "Sản phẩm",
       "users": "Người dùng",
       "profile": "Hồ sơ của tôi"
     },
     "header": {
       "overview": "Tổng quan",
       "orders": "Quản lý đơn hàng",
+      "products": "Quản lý sản phẩm",
       "users": "Quản lý người dùng",
       "profile": "Hồ sơ của tôi",
       "admin": "Admin"
@@ -79,6 +81,40 @@
       "name": "Họ tên",
       "email": "Email",
       "roles": "Vai trò"
+    }
+  },
+  "products": {
+    "editProduct": "Chỉnh sửa sản phẩm",
+    "edit": "Sửa",
+    "loadError": "Không tải được danh sách sản phẩm.",
+    "searchPlaceholder": "Tìm theo tên, mã SP...",
+    "statusLabel": "Trạng thái",
+    "statusAll": "Tất cả",
+    "statusDisabled": "Tắt",
+    "statusActive": "Đang kinh doanh",
+    "editLogs": "Lịch sử chỉnh sửa",
+    "loading": "Đang tải...",
+    "noEditLogs": "Chưa có lịch sử chỉnh sửa.",
+    "visibilityTitle": "Phân quyền xem sản phẩm",
+    "visibilityDesc": "Chọn \"Tất cả nhân viên\" = toàn bộ phòng được xem. Chọn từng người = chỉ những người đó được xem.",
+    "saveVisibility": "Lưu phân quyền",
+    "visibilityAllStaff": "Tất cả nhân viên",
+    "visibilitySearchPlaceholder": "Tìm theo tên hoặc email...",
+    "visibilityDept": {
+      "marketing": "Marketing",
+      "sale": "Sale (Telesale & Telesale Leader)",
+      "customer_service": "Customer Service"
+    },
+    "fields": {
+      "name": "Tên sản phẩm",
+      "code": "Mã SP",
+      "unit": "Đơn vị tính",
+      "purchasePrice": "Giá nhập",
+      "unitPrice": "Đơn giá",
+      "vatPercent": "VAT (%)",
+      "vatCode": "Mã VAT",
+      "weightGram": "Khối lượng (gram)",
+      "status": "Trạng thái"
     }
   },
   "dashboard": {

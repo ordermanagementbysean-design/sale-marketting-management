@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\UserRole;
 use App\Models\User;
+use Database\Seeders\ProductSeeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -27,6 +28,7 @@ class DatabaseSeeder extends Seeder
             UserRole::ACCOUNTING->value      => ['name' => 'Test Accounting', 'email' => 'test-accounting@example.com'],
             UserRole::WAREHOUSE->value       => ['name' => 'Test Warehouse', 'email' => 'test-warehouse@example.com'],
             UserRole::MANAGER->value         => ['name' => 'Test Manager', 'email' => 'test-manager@example.com'],
+            UserRole::CUSTOMER_SERVICE->value => ['name' => 'Test Customer Service', 'email' => 'test-customer-service@example.com'],
         ];
 
         foreach ($roleUsers as $role => $attrs) {

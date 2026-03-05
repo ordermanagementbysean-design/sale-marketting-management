@@ -18,12 +18,14 @@
       "appName": "Sale Marketing",
       "overview": "Overview",
       "orders": "Orders",
+      "products": "Products",
       "users": "Users",
       "profile": "My profile"
     },
     "header": {
       "overview": "Overview",
       "orders": "Order Management",
+      "products": "Product Management",
       "users": "User Management",
       "profile": "My profile",
       "admin": "Admin"
@@ -79,6 +81,40 @@
       "name": "Name",
       "email": "Email",
       "roles": "Roles"
+    }
+  },
+  "products": {
+    "editProduct": "Edit product",
+    "edit": "Edit",
+    "loadError": "Failed to load products.",
+    "searchPlaceholder": "Search by name, code...",
+    "statusLabel": "Status",
+    "statusAll": "All",
+    "statusDisabled": "Disabled",
+    "statusActive": "Active",
+    "editLogs": "Edit history",
+    "loading": "Loading...",
+    "noEditLogs": "No edit history yet.",
+    "visibilityTitle": "Product view permission",
+    "visibilityDesc": "Choose \"All staff\" = whole department can view. Choose specific people = only they can view.",
+    "saveVisibility": "Save permission",
+    "visibilityAllStaff": "All staff",
+    "visibilitySearchPlaceholder": "Search by name or email...",
+    "visibilityDept": {
+      "marketing": "Marketing",
+      "sale": "Sale (Telesale & Telesale Leader)",
+      "customer_service": "Customer Service"
+    },
+    "fields": {
+      "name": "Product name",
+      "code": "Product code",
+      "unit": "Unit",
+      "purchasePrice": "Purchase price",
+      "unitPrice": "Unit price",
+      "vatPercent": "VAT (%)",
+      "vatCode": "VAT code",
+      "weightGram": "Weight (gram)",
+      "status": "Status"
     }
   },
   "dashboard": {

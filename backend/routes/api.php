@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Company\CompanyController;
 use App\Http\Controllers\Company\ConnectedAccountController;
 use App\Http\Controllers\Order\OrderController;
+use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\User\RoleController;
 use App\Http\Controllers\User\UserController;
 use App\Http\Middleware\RequireCompanyId;
@@ -19,6 +20,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/me/password', [AuthController::class, 'changePassword']);
     Route::apiResource('users', UserController::class);
     Route::get('/roles', [RoleController::class, 'index']);
+    Route::get('/products', [ProductController::class, 'index']);
+    Route::get('/products/eligible-users', [ProductController::class, 'eligibleUsers']);
+    Route::get('/products/{product}', [ProductController::class, 'show']);
+    Route::put('/products/{product}', [ProductController::class, 'update']);
+    Route::put('/products/{product}/visibility', [ProductController::class, 'updateVisibility']);
 });
 
 Route::middleware([RequireCompanyId::class])->group(function () {

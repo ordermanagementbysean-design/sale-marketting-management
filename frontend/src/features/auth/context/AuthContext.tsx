@@ -29,6 +29,7 @@ interface AuthState {
   token: string | null;
   isLoading: boolean;
   canManageUsers: boolean;
+  canEditProducts: boolean;
 }
 
 interface AuthContextValue extends AuthState {
@@ -47,14 +48,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     token: getStoredToken(),
     isLoading: true,
     canManageUsers: false,
+    canEditProducts: false,
   });
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     const res = await loginApi(credentials);
-    const { user, token, can_manage_users = false } = res;
+    const { user, token, can_manage_users = false, can_edit_products = false } = res;
     storeToken(token);
     setAuthToken(token);
-    setState({ user, token, isLoading: false, canManageUsers: can_manage_users });
+    setState({
+      user,
+      token,
+      isLoading: false,
+      canManageUsers: can_manage_users,
+      canEditProducts: can_edit_products,
+    });
     navigate("/", { replace: true });
   }, [navigate]);
 
@@ -64,7 +72,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       storeToken(null);
       setAuthToken(null);
-      setState({ user: null, token: null, isLoading: false, canManageUsers: false });
+      setState({
+        user: null,
+        token: null,
+        isLoading: false,
+        canManageUsers: false,
+        canEditProducts: false,
+      });
       navigate("/login", { replace: true });
     }
   }, [navigate]);
@@ -72,8 +86,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = useCallback(async () => {
     const token = getStoredToken();
     if (!token) return;
-    const { user, can_manage_users = false } = await getMe();
-    setState((s) => ({ ...s, user, canManageUsers: can_manage_users }));
+    const { user, can_manage_users = false, can_edit_products = false } = await getMe();
+    setState((s) => ({
+      ...s,
+      user,
+      canManageUsers: can_manage_users,
+      canEditProducts: can_edit_products,
+    }));
   }, []);
 
   useEffect(() => {
@@ -85,13 +104,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setAuthToken(token);
     getMe()
-      .then(({ user, can_manage_users = false }) =>
-        setState({ user, token, isLoading: false, canManageUsers: can_manage_users })
+      .then(({ user, can_manage_users = false, can_edit_products = false }) =>
+        setState({
+          user,
+          token,
+          isLoading: false,
+          canManageUsers: can_manage_users,
+          canEditProducts: can_edit_products,
+        })
       )
       .catch(() => {
         storeToken(null);
         setAuthToken(null);
-        setState({ user: null, token: null, isLoading: false, canManageUsers: false });
+        setState({
+          user: null,
+          token: null,
+          isLoading: false,
+          canManageUsers: false,
+          canEditProducts: false,
+        });
       });
   }, []);
 

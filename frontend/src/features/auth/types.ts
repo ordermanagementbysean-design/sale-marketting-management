@@ -18,9 +18,11 @@ export interface LoginResponse {
   token: string;
   token_type: string;
   can_manage_users?: boolean;
+  can_edit_products?: boolean;
 }
 
 export interface MeResponse {
   user: User;
   can_manage_users?: boolean;
+  can_edit_products?: boolean;
 }

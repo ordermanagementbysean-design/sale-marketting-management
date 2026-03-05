@@ -37,10 +37,11 @@ class AuthController extends Controller
         $token = $user->createToken('auth')->plainTextToken;
 
         return response()->json([
-            'user'             => $user,
-            'can_manage_users' => $user->canManageUsers(),
-            'token'      => $token,
-            'token_type' => 'Bearer',
+            'user'               => $user,
+            'can_manage_users'   => $user->canManageUsers(),
+            'can_edit_products'  => $user->canEditProducts(),
+            'token'              => $token,
+            'token_type'         => 'Bearer',
         ]);
     }
 
@@ -63,8 +64,9 @@ class AuthController extends Controller
         $user = $request->user();
 
         return response()->json([
-            'user'             => $user,
-            'can_manage_users' => $user->canManageUsers(),
+            'user'              => $user,
+            'can_manage_users'  => $user->canManageUsers(),
+            'can_edit_products' => $user->canEditProducts(),
         ]);
     }
 
