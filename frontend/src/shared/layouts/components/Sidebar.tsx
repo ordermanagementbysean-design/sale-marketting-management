@@ -5,14 +5,19 @@ import Box from "@mui/material/Box";
 import List from "@mui/material/List";
 import type { SxProps, Theme } from "@mui/material/styles";
 import { useNavigate, useLocation } from "react-router-dom";
+import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
+import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
+import { useAuth } from "@/features/auth/context/AuthContext";
 
 const SIDEBAR_WIDTH = 260;
 
-const menuPaths = [
-  { path: "/", labelKey: "layout.sidebar.overview", icon: <DashboardOutlinedIcon /> },
-  { path: "/orders", labelKey: "layout.sidebar.orders", icon: <ShoppingCartOutlinedIcon /> },
+const allMenuItems = [
+  { path: "/", labelKey: "layout.sidebar.overview", icon: <DashboardOutlinedIcon />, requireManageUsers: false },
+  { path: "/orders", labelKey: "layout.sidebar.orders", icon: <ShoppingCartOutlinedIcon />, requireManageUsers: false },
+  { path: "/users", labelKey: "layout.sidebar.users", icon: <PeopleOutlinedIcon />, requireManageUsers: true },
+  { path: "/profile", labelKey: "layout.sidebar.profile", icon: <PersonOutlinedIcon />, requireManageUsers: false },
 ] as const;
 
 const rootSx: SxProps<Theme> = {
@@ -44,6 +49,7 @@ const itemIconSx: SxProps<Theme> = { minWidth: 40 };
 
 const SidebarComponent = () => {
   const { t } = useTranslation();
+  const { canManageUsers } = useAuth();
   const navigate = useNavigate();
   const pathname = useLocation().pathname;
 
@@ -55,8 +61,11 @@ const SidebarComponent = () => {
   );
 
   const menuItems = useMemo(
-    () => menuPaths.map((item) => ({ ...item, label: t(item.labelKey) })),
-    [t]
+    () =>
+      allMenuItems
+        .filter((item) => !item.requireManageUsers || canManageUsers)
+        .map((item) => ({ ...item, label: t(item.labelKey) })),
+    [t, canManageUsers]
   );
 
   return (

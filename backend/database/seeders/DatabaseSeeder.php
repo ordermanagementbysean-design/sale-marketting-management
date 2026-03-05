@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -15,12 +16,26 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $password = '123456a@A';
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => '123456',
-        ]);
+        $roleUsers = [
+            UserRole::MARKETING->value       => ['name' => 'Test Marketing', 'email' => 'test-marketing@example.com'],
+            UserRole::ADMIN->value           => ['name' => 'Test Admin', 'email' => 'test-admin@example.com'],
+            UserRole::TELESALE->value        => ['name' => 'Test Telesale', 'email' => 'test-telesale@example.com'],
+            UserRole::TELESALE_LEADER->value => ['name' => 'Test Telesale Leader', 'email' => 'test-telesale-leader@example.com'],
+            UserRole::DIRECTOR->value        => ['name' => 'Test Director', 'email' => 'test-director@example.com'],
+            UserRole::ACCOUNTING->value      => ['name' => 'Test Accounting', 'email' => 'test-accounting@example.com'],
+            UserRole::WAREHOUSE->value       => ['name' => 'Test Warehouse', 'email' => 'test-warehouse@example.com'],
+            UserRole::MANAGER->value         => ['name' => 'Test Manager', 'email' => 'test-manager@example.com'],
+        ];
+
+        foreach ($roleUsers as $role => $attrs) {
+            User::factory()->create([
+                'name'     => $attrs['name'],
+                'email'    => $attrs['email'],
+                'password' => $password,
+                'role'     => $role,
+            ]);
+        }
     }
 }

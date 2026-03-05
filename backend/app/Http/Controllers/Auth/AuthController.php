@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -36,7 +37,8 @@ class AuthController extends Controller
         $token = $user->createToken('auth')->plainTextToken;
 
         return response()->json([
-            'user'       => $user,
+            'user'             => $user,
+            'can_manage_users' => $user->canManageUsers(),
             'token'      => $token,
             'token_type' => 'Bearer',
         ]);
@@ -57,6 +59,37 @@ class AuthController extends Controller
      */
     public function me(Request $request): JsonResponse
     {
-        return response()->json(['user' => $request->user()]);
+        /** @var User $user */
+        $user = $request->user();
+
+        return response()->json([
+            'user'             => $user,
+            'can_manage_users' => $user->canManageUsers(),
+        ]);
+    }
+
+    /**
+     * Change password: requires old_password to be correct, new_password and confirmation must match.
+     */
+    public function changePassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'old_password' => ['required', 'string'],
+            'new_password' => ['required', 'string', 'confirmed', Password::defaults()],
+        ]);
+
+        /** @var User $user */
+        $user = $request->user();
+
+        if (! Hash::check($validated['old_password'], $user->password)) {
+            throw ValidationException::withMessages([
+                'old_password' => ['The current password is incorrect.'],
+            ]);
+        }
+
+        $user->password = $validated['new_password'];
+        $user->save();
+
+        return response()->json(['message' => 'Password updated.']);
     }
 }

@@ -28,11 +28,13 @@ interface AuthState {
   user: User | null;
   token: string | null;
   isLoading: boolean;
+  canManageUsers: boolean;
 }
 
 interface AuthContextValue extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -44,13 +46,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user: null,
     token: getStoredToken(),
     isLoading: true,
+    canManageUsers: false,
   });
 
   const login = useCallback(async (credentials: LoginCredentials) => {
-    const { user, token } = await loginApi(credentials);
+    const res = await loginApi(credentials);
+    const { user, token, can_manage_users = false } = res;
     storeToken(token);
     setAuthToken(token);
-    setState({ user, token, isLoading: false });
+    setState({ user, token, isLoading: false, canManageUsers: can_manage_users });
     navigate("/", { replace: true });
   }, [navigate]);
 
@@ -60,10 +64,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       storeToken(null);
       setAuthToken(null);
-      setState({ user: null, token: null, isLoading: false });
+      setState({ user: null, token: null, isLoading: false, canManageUsers: false });
       navigate("/login", { replace: true });
     }
   }, [navigate]);
+
+  const refreshUser = useCallback(async () => {
+    const token = getStoredToken();
+    if (!token) return;
+    const { user, can_manage_users = false } = await getMe();
+    setState((s) => ({ ...s, user, canManageUsers: can_manage_users }));
+  }, []);
 
   useEffect(() => {
     const token = getStoredToken();
@@ -74,11 +85,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setAuthToken(token);
     getMe()
-      .then(({ user }) => setState({ user, token, isLoading: false }))
+      .then(({ user, can_manage_users = false }) =>
+        setState({ user, token, isLoading: false, canManageUsers: can_manage_users })
+      )
       .catch(() => {
         storeToken(null);
         setAuthToken(null);
-        setState({ user: null, token: null, isLoading: false });
+        setState({ user: null, token: null, isLoading: false, canManageUsers: false });
       });
   }, []);
 
@@ -87,9 +100,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ...state,
       login,
       logout,
+      refreshUser,
       isAuthenticated: !!state.user && !!state.token,
     }),
-    [state, login, logout]
+    [state, login, logout, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\UserRole as UserRoleEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -22,7 +23,20 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
+
+    /**
+     * Whether this user can view user list, create users, and manage any user.
+     */
+    public function canManageUsers(): bool
+    {
+        $role = $this->role instanceof UserRoleEnum
+            ? $this->role->value
+            : (string) $this->role;
+
+        return UserRoleEnum::canManageUsers($role);
+    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -43,7 +57,8 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password'          => 'hashed',
+            'role'              => UserRoleEnum::class,
         ];
     }
 }

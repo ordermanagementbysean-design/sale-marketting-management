@@ -6,6 +6,9 @@ import LoginPage from "@/features/auth/pages/LoginPage";
 import AdminLayout from "@/shared/layouts/AdminLayout";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage";
 import OrderPage from "@/features/orders/pages/OrderPage";
+import ChangePasswordPage from "@/features/users/pages/ChangePasswordPage";
+import ProfilePage from "@/features/users/pages/ProfilePage";
+import UserPage from "@/features/users/pages/UserPage";
 
 const App = memo(function App() {
   return (
@@ -23,6 +26,9 @@ const App = memo(function App() {
           >
             <Route index element={<DashboardPage />} />
             <Route path="orders" element={<OrderPage />} />
+            <Route path="users" element={<UserPage />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="profile/change-password" element={<ChangePasswordPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

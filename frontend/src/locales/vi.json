@@ -17,11 +17,15 @@
     "sidebar": {
       "appName": "Sale Marketing",
       "overview": "Tổng quan",
-      "orders": "Đơn hàng"
+      "orders": "Đơn hàng",
+      "users": "Người dùng",
+      "profile": "Hồ sơ của tôi"
     },
     "header": {
       "overview": "Tổng quan",
       "orders": "Quản lý đơn hàng",
+      "users": "Quản lý người dùng",
+      "profile": "Hồ sơ của tôi",
       "admin": "Admin"
     }
   },
@@ -42,6 +46,40 @@
     "statusCancel": "Đã hủy",
     "refresh": "Làm mới",
     "loadError": "Không tải được danh sách đơn hàng. Vui lòng thử lại."
+  },
+  "users": {
+    "addUser": "Thêm người dùng",
+    "editUser": "Sửa người dùng",
+    "create": "Tạo",
+    "save": "Lưu",
+    "edit": "Sửa",
+    "delete": "Xóa",
+    "cancel": "Hủy",
+    "roles": "Vai trò",
+    "newPassword": "Mật khẩu mới",
+    "leaveBlank": "Để trống nếu giữ nguyên",
+    "passwordConfirm": "Xác nhận mật khẩu",
+    "deleteConfirm": "Xóa người dùng \"{{name}}\"?",
+    "loadError": "Không tải được danh sách người dùng.",
+    "profileTitle": "Hồ sơ của tôi",
+    "profileSubtitle": "Cập nhật tên hiển thị.",
+    "profileUpdated": "Đã cập nhật hồ sơ.",
+    "profileUpdateError": "Cập nhật hồ sơ thất bại.",
+    "changePassword": "Đổi mật khẩu",
+    "changePasswordTitle": "Đổi mật khẩu",
+    "changePasswordSubtitle": "Nhập mật khẩu hiện tại và mật khẩu mới.",
+    "oldPassword": "Mật khẩu hiện tại",
+    "changePasswordSubmit": "Cập nhật mật khẩu",
+    "passwordUpdated": "Đã đổi mật khẩu. Đang chuyển…",
+    "changePasswordError": "Đổi mật khẩu thất bại.",
+    "passwordMismatch": "Mật khẩu mới và xác nhận không khớp.",
+    "saving": "Đang lưu…",
+    "columns": {
+      "id": "ID",
+      "name": "Họ tên",
+      "email": "Email",
+      "roles": "Vai trò"
+    }
   },
   "dashboard": {
     "welcome": "Chào mừng trở lại",

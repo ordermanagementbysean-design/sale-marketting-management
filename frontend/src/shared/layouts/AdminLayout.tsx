@@ -29,6 +29,9 @@ const contentSx: SxProps<Theme> = {
 const pathToTitleKey: Record<string, string> = {
   "/": "layout.header.overview",
   "/orders": "layout.header.orders",
+  "/users": "layout.header.users",
+  "/profile": "layout.header.profile",
+  "/profile/change-password": "users.changePasswordTitle",
 };
 
 const AdminLayoutComponent = () => {

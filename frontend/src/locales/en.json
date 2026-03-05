@@ -17,11 +17,15 @@
     "sidebar": {
       "appName": "Sale Marketing",
       "overview": "Overview",
-      "orders": "Orders"
+      "orders": "Orders",
+      "users": "Users",
+      "profile": "My profile"
     },
     "header": {
       "overview": "Overview",
       "orders": "Order Management",
+      "users": "User Management",
+      "profile": "My profile",
       "admin": "Admin"
     }
   },
@@ -42,6 +46,40 @@
     "statusCancel": "Cancelled",
     "refresh": "Refresh",
     "loadError": "Failed to load orders. Please try again."
+  },
+  "users": {
+    "addUser": "Add user",
+    "editUser": "Edit user",
+    "create": "Create",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "roles": "Roles",
+    "newPassword": "New password",
+    "leaveBlank": "Leave blank to keep current",
+    "passwordConfirm": "Confirm password",
+    "deleteConfirm": "Delete user \"{{name}}\"?",
+    "loadError": "Failed to load users.",
+    "profileTitle": "My profile",
+    "profileSubtitle": "Update your name and email display.",
+    "profileUpdated": "Profile updated.",
+    "profileUpdateError": "Failed to update profile.",
+    "changePassword": "Change password",
+    "changePasswordTitle": "Change password",
+    "changePasswordSubtitle": "Enter your current password and choose a new one.",
+    "oldPassword": "Current password",
+    "changePasswordSubmit": "Update password",
+    "passwordUpdated": "Password updated. Redirecting…",
+    "changePasswordError": "Failed to change password.",
+    "passwordMismatch": "New password and confirmation do not match.",
+    "saving": "Saving…",
+    "columns": {
+      "id": "ID",
+      "name": "Name",
+      "email": "Email",
+      "roles": "Roles"
+    }
   },
   "dashboard": {
     "welcome": "Welcome back",

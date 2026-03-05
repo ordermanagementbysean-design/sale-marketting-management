@@ -1,7 +1,8 @@
 FROM php:8.4-cli-alpine
 
-# Install system deps
+# Install system deps (bash for docker exec -it backend-app bash)
 RUN apk add --no-cache \
+    bash \
     git \
     unzip \
     libzip-dev \

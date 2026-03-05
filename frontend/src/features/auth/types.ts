@@ -5,6 +5,7 @@ export interface User {
   email_verified_at: string | null;
   created_at: string;
   updated_at: string;
+  role?: string;
 }
 
 export interface LoginCredentials {
@@ -16,8 +17,10 @@ export interface LoginResponse {
   user: User;
   token: string;
   token_type: string;
+  can_manage_users?: boolean;
 }
 
 export interface MeResponse {
   user: User;
+  can_manage_users?: boolean;
 }
