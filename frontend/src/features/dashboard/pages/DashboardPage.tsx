@@ -11,7 +11,7 @@ import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
-import { useOrders } from "@/features/orders/hooks/useOrders";
+import { searchOrders } from "@/features/orders/hooks/orderHooks";
 
 interface StatCardProps {
   title: string;
@@ -114,7 +114,7 @@ const trendingIcon = <TrendingUpIcon fontSize="medium" />;
 const DashboardPageComponent = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data: ordersData, isLoading } = useOrders(EMPTY_FILTERS);
+  const { data: ordersData, isLoading } = searchOrders(EMPTY_FILTERS);
 
   const goToOrders = useCallback(() => {
     navigate("/orders");

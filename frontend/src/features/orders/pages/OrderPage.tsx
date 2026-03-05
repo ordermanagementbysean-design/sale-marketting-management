@@ -10,7 +10,7 @@ import Select from "@mui/material/Select";
 import type { SxProps, Theme } from "@mui/material/styles";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import { useOrders } from "../hooks/useOrders";
+import { searchOrders } from "../hooks/orderHooks";
 import type { Order } from "../types";
 
 const getRowId = (row: Order) => row.id;
@@ -40,7 +40,7 @@ const OrderPageComponent = () => {
   const [status, setStatus] = useState<string>(ORDER_STATUS.ALL);
   const filters = useMemo(() => ({ status }), [status]);
 
-  const { data: orderResponseData, isLoading, error, refetch } = useOrders(filters);
+  const { data: orderResponseData, isLoading, error, refetch } = searchOrders(filters, 0);
 
   const columns = useMemo<GridColDef<Order>[]>(
     () => [
