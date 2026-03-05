@@ -1,4 +1,14 @@
 {
+  "auth": {
+    "title": "Sign in",
+    "subtitle": "Sign in with your email and password",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "loginError": "Invalid email or password.",
+    "logout": "Log out"
+  },
   "languages": {
     "vi": "Tiếng Việt",
     "en": "English"

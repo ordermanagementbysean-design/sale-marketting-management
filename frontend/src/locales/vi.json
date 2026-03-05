@@ -1,4 +1,14 @@
 {
+  "auth": {
+    "title": "Đăng nhập",
+    "subtitle": "Đăng nhập bằng email và mật khẩu",
+    "email": "Email",
+    "password": "Mật khẩu",
+    "signIn": "Đăng nhập",
+    "signingIn": "Đang đăng nhập…",
+    "loginError": "Email hoặc mật khẩu không đúng.",
+    "logout": "Đăng xuất"
+  },
   "languages": {
     "vi": "Tiếng Việt",
     "en": "English"

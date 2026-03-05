@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Company\CompanyController;
 use App\Http\Controllers\Company\ConnectedAccountController;
 use App\Http\Controllers\Order\OrderController;
@@ -7,6 +8,12 @@ use App\Http\Middleware\RequireCompanyId;
 
 Route::any('/', function () {
     return response()->json(['message' => 'API is running']);
+});
+
+Route::post('/login', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/me', [AuthController::class, 'me']);
 });
 
 Route::middleware([RequireCompanyId::class])->group(function () {
