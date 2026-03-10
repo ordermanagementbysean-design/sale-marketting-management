@@ -21,6 +21,7 @@
       "products": "Products",
       "salePeriodList": "Product sale periods",
       "addSalePeriod": "Add product sale period",
+      "aiPageBuilder": "AI Page Builder",
       "users": "Users",
       "profile": "My profile"
     },
@@ -30,6 +31,7 @@
       "products": "Product Management",
       "salePeriodList": "Product sale periods",
       "addSalePeriod": "Add product sale period",
+      "aiPageBuilder": "AI Page Builder",
       "users": "User Management",
       "profile": "My profile",
       "admin": "Admin"

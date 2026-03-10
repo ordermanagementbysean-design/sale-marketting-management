@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AiPageBuilder\EditWithAiController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Company\CompanyController;
 use App\Http\Controllers\Company\ConnectedAccountController;
@@ -36,6 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/products/{product}', [ProductController::class, 'show']);
     Route::put('/products/{product}', [ProductController::class, 'update']);
     Route::put('/products/{product}/visibility', [ProductController::class, 'updateVisibility']);
+    Route::post('/ai-page-builder/edit-with-ai', EditWithAiController::class);
 });
 
 Route::middleware([RequireCompanyId::class])->group(function () {

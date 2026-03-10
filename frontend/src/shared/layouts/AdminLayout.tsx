@@ -35,6 +35,7 @@ const pathToTitleKey: Record<string, string> = {
   "/users": "layout.header.users",
   "/profile": "layout.header.profile",
   "/profile/change-password": "users.changePasswordTitle",
+  "/ai-page-builder": "layout.header.aiPageBuilder",
 };
 
 const AdminLayoutComponent = () => {

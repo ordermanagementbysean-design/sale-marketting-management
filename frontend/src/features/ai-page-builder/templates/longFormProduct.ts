@@ -1,0 +1,131 @@
+import type { TemplateConfig } from "../types";
+
+export const longFormProductTemplate: TemplateConfig = {
+  id: "long_form_product",
+  name: "Shopify Long Form Product Page",
+  structure: ["hero", "product_images", "features", "how_it_works", "comparison", "reviews", "ugc", "faq", "shipping", "cta"],
+  sections: [
+    {
+      id: "hero_long",
+      type: "hero",
+      layout: "two-column",
+      label: "Hero",
+      required: true,
+      fields: [
+        { key: "hero_heading", label: "Heading", type: "text", required: true, defaultValue: "The Only Product You'll Ever Need" },
+        { key: "hero_text", label: "Subtext", type: "textarea", required: false, defaultValue: "Premium quality with thousands of satisfied users." },
+        { key: "hero_button_text", label: "Button text", type: "text", required: false, defaultValue: "Shop Now" },
+        { key: "hero_image", label: "Hero image URL", type: "image", required: false, placeholder: "https://..." },
+      ],
+    },
+    {
+      id: "product_images",
+      type: "product_images",
+      label: "Product images",
+      required: false,
+      fields: [
+        { key: "product_image_1", label: "Image 1 URL", type: "image", required: false, placeholder: "https://images.unsplash.com/photo-..." },
+        { key: "product_image_2", label: "Image 2 URL", type: "image", required: false, placeholder: "https://..." },
+        { key: "product_image_3", label: "Image 3 URL", type: "image", required: false, placeholder: "https://..." },
+      ],
+    },
+    {
+      id: "features",
+      type: "features",
+      label: "Features",
+      required: false,
+      fields: [
+        { key: "features_heading", label: "Section heading", type: "text", required: false, defaultValue: "Why Choose Us" },
+        { key: "feature_1_title", label: "Feature 1 title", type: "text", required: false, defaultValue: "Premium Quality" },
+        { key: "feature_1_desc", label: "Feature 1 description", type: "textarea", required: false, defaultValue: "Made with the finest materials for lasting durability and comfort." },
+        { key: "feature_2_title", label: "Feature 2 title", type: "text", required: false, defaultValue: "Fast Shipping" },
+        { key: "feature_2_desc", label: "Feature 2 description", type: "textarea", required: false, defaultValue: "Free standard shipping on all orders. Express delivery available." },
+        { key: "feature_3_title", label: "Feature 3 title", type: "text", required: false, defaultValue: "24/7 Support" },
+        { key: "feature_3_desc", label: "Feature 3 description", type: "textarea", required: false, defaultValue: "Our customer care team is always here to help with any questions." },
+      ],
+    },
+    {
+      id: "how_it_works",
+      type: "how_it_works",
+      label: "How it works",
+      required: false,
+      fields: [
+        { key: "how_heading", label: "Section heading", type: "text", required: false, defaultValue: "How It Works" },
+        { key: "step_1", label: "Step 1", type: "text", required: false, defaultValue: "Add to cart and checkout securely" },
+        { key: "step_2", label: "Step 2", type: "text", required: false, defaultValue: "We ship your order within 24 hours" },
+        { key: "step_3", label: "Step 3", type: "text", required: false, defaultValue: "Enjoy your product at your doorstep" },
+      ],
+    },
+    {
+      id: "comparison",
+      type: "comparison",
+      label: "Comparison",
+      required: false,
+      fields: [
+        { key: "comparison_heading", label: "Section heading", type: "text", required: false, defaultValue: "Before vs After" },
+        { key: "before_text", label: "Before", type: "textarea", required: false, defaultValue: "Struggling with the same old issues. Wasting time and money on solutions that don't work." },
+        { key: "after_text", label: "After", type: "textarea", required: false, defaultValue: "Problem solved. Save time, save money, and get results you can see and feel every day." },
+      ],
+    },
+    {
+      id: "reviews",
+      type: "reviews",
+      label: "Reviews",
+      required: false,
+      fields: [
+        { key: "reviews_rating", label: "Rating (0–5)", type: "text", required: false, defaultValue: "4.2" },
+        { key: "reviews_heading", label: "Section heading", type: "text", required: false, defaultValue: "What Customers Say" },
+        { key: "review_1_rating", label: "Review 1 rating (0–5)", type: "text", required: false, defaultValue: "5" },
+        { key: "review_1_text", label: "Review 1", type: "textarea", required: false, defaultValue: "Exactly what I was looking for. Quality is outstanding and delivery was fast. Highly recommend!" },
+        { key: "review_1_author", label: "Review 1 author", type: "text", required: false, defaultValue: "Sarah M." },
+        { key: "review_2_rating", label: "Review 2 rating (0–5)", type: "text", required: false, defaultValue: "4" },
+        { key: "review_2_text", label: "Review 2", type: "textarea", required: false, defaultValue: "Best purchase I've made this year. It really does everything they say. Will buy again." },
+        { key: "review_2_author", label: "Review 2 author", type: "text", required: false, defaultValue: "James K." },
+      ],
+    },
+    {
+      id: "ugc",
+      type: "ugc",
+      label: "UGC",
+      required: false,
+      fields: [
+        { key: "ugc_heading", label: "Section heading", type: "text", required: false, defaultValue: "Real Customers, Real Results" },
+        { key: "ugc_image_1", label: "UGC image 1 URL", type: "image", required: false, placeholder: "https://..." },
+        { key: "ugc_image_2", label: "UGC image 2 URL", type: "image", required: false, placeholder: "https://..." },
+      ],
+    },
+    {
+      id: "faq",
+      type: "faq",
+      label: "FAQ",
+      required: false,
+      fields: [
+        { key: "faq_heading", label: "Section heading", type: "text", required: false, defaultValue: "Frequently Asked Questions" },
+        { key: "faq_1_q", label: "Question 1", type: "text", required: false, defaultValue: "How long does shipping take?" },
+        { key: "faq_1_a", label: "Answer 1", type: "textarea", required: false, defaultValue: "We ship within 1–2 business days. Standard delivery is 5–7 days. Express options available at checkout." },
+        { key: "faq_2_q", label: "Question 2", type: "text", required: false, defaultValue: "What is your return policy?" },
+        { key: "faq_2_a", label: "Answer 2", type: "textarea", required: false, defaultValue: "We offer a 30-day money-back guarantee. If you're not satisfied, return it for a full refund—no questions asked." },
+      ],
+    },
+    {
+      id: "shipping",
+      type: "shipping",
+      label: "Shipping",
+      required: false,
+      fields: [
+        { key: "shipping_heading", label: "Section heading", type: "text", required: false, defaultValue: "Shipping & Returns" },
+        { key: "shipping_text", label: "Shipping info", type: "textarea", required: false, defaultValue: "Free shipping on orders over $50. We ship worldwide. Returns accepted within 30 days. Contact support for exchanges or refunds." },
+      ],
+    },
+    {
+      id: "cta",
+      type: "cta",
+      label: "CTA",
+      required: true,
+      fields: [
+        { key: "cta_heading", label: "CTA heading", type: "text", required: true, defaultValue: "Get Yours Today" },
+        { key: "cta_button", label: "Button text", type: "text", required: true, defaultValue: "Add to Cart" },
+      ],
+    },
+  ],
+};

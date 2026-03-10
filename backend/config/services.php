@@ -44,4 +44,8 @@ return [
         'base_url'     => env('FB_BASE_URL'),
         'verify_token' => env('FB_LEADGEN_VERIFY_TOKEN'),
     ],
+
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+    ],
 ];
