@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class EditWithAiController extends Controller
 {
@@ -36,20 +37,24 @@ class EditWithAiController extends Controller
         $slim = $this->slimTemplateForPrompt($valid['template']);
         $templateJson = json_encode($slim, JSON_UNESCAPED_UNICODE);
         $instruction = $valid['instruction'];
-        $dataJson = ! empty($valid['data']) ? json_encode($valid['data'], JSON_UNESCAPED_UNICODE) : null;
-        $dataBlock = $dataJson !== null
-            ? "\n\nCurrent field values (edit these per instruction): {$dataJson}"
+        $slimData = $this->slimDataForPrompt($valid['template'], $valid['data'] ?? []);
+        $dataBlock = $slimData !== []
+            ? "\nData:" . json_encode($slimData, JSON_UNESCAPED_UNICODE)
             : '';
-        $prompt = "Edit template: reorder sections and/or change field content per instruction. Return only valid JSON, no markdown.\n\nTemplate: {$templateJson}{$dataBlock}\n\nInstruction: {$instruction}\n\nReturn JSON: {\"structure\":[\"type1\",...],\"sectionIds\":[\"id1\",\"id2\",...],\"content\":{\"field_key\":\"value\",...}}. structure + sectionIds = new order (all section ids, reordered). content = only fields whose text/value should change: key = field key, value = string or number. Omit content or use {} if only reorder.";
+        $templateToHtml = $this->buildTemplateToHtmlReference($valid['template']);
+        $prompt = "You edit a page template. Each section has id, type, label; sections render to HTML. Use section id in sectionSettings.\n\n{$templateToHtml}\n\nEdit per instruction. Return JSON only.\nT:{$templateJson}{$dataBlock}\nInstruction: {$instruction}\nFormat: {\"structure\":[\"type\",...],\"sectionIds\":[\"id\",...],\"content\":{\"fieldKey\":\"value\"},\"sectionSettings\":{\"sectionId\":{\"settingKey\":value}}}. Keep structure and sectionIds in same order as T. content=only changed text field keys. sectionSettings=style/color: use section id (from T.sections[].id) and setting keys listed above.";
 
-        $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=' . $apiKey;
+        $model = config('services.gemini.model', 'gemini-2.0-flash');
+        $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . $model . ':generateContent?key=' . $apiKey;
         $response = Http::timeout(60)->post($url, [
             'contents' => [
                 ['parts' => [['text' => $prompt]]],
             ],
             'generationConfig' => [
                 'responseMimeType' => 'application/json',
-                'temperature'      => 0.3,
+                'temperature'      => 0.2,
+                // Gemini 3 uses "thinking" tokens that count toward limit; allow enough for thought + full JSON
+                'maxOutputTokens'  => 8192,
             ],
         ]);
 
@@ -72,7 +77,12 @@ class EditWithAiController extends Controller
         }
         $parsed = json_decode($text, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return response()->json(['message' => 'Không parse được JSON từ Gemini: ' . json_last_error_msg()], 502);
+            $errorMessage = json_last_error_msg();
+            Log::error('Không parse được JSON từ Gemini: ' . $errorMessage, [
+                'response' => $body,
+            ]);
+
+            return response()->json(['message' => 'Không parse được JSON từ Gemini: ' . $errorMessage], 502);
         }
 
         if (! is_array($parsed) || empty($parsed['structure']) || empty($parsed['sectionIds'])) {
@@ -81,11 +91,77 @@ class EditWithAiController extends Controller
 
         $content = $parsed['content'] ?? [];
         $content = is_array($content) ? $content : [];
+        $sectionSettings = $parsed['sectionSettings'] ?? [];
+        $sectionSettings = is_array($sectionSettings) ? $sectionSettings : [];
 
         $template = $this->mergeReorderedTemplate($valid['template'], $parsed['structure'], $parsed['sectionIds']);
         $template = $this->applyContentToTemplate($template, $content);
+        $template = $this->applySectionSettings($template, $sectionSettings);
 
         return response()->json(['template' => $template]);
+    }
+
+    /** Chỉ gửi field text/textarea/url, truncate → giảm token. */
+    private function slimDataForPrompt(array $template, array $data): array
+    {
+        if (empty($data)) {
+            return [];
+        }
+        $textTypes = ['text', 'textarea', 'url'];
+        $keys = [];
+        foreach ($template['sections'] ?? [] as $section) {
+            foreach ($section['fields'] ?? [] as $field) {
+                $type = $field['type'] ?? 'text';
+                if (in_array($type, $textTypes, true)) {
+                    $key = $field['key'] ?? null;
+                    if ($key !== null) {
+                        $keys[$key] = true;
+                    }
+                }
+            }
+        }
+        $out = [];
+        $maxLen = 150;
+        foreach ($keys as $key => $_) {
+            if (! array_key_exists($key, $data)) {
+                continue;
+            }
+            $v = $data[$key];
+            if ($v === null || $v === '') {
+                $out[$key] = '';
+                continue;
+            }
+            $s = is_scalar($v) ? (string) $v : json_encode($v);
+            $out[$key] = mb_strlen($s) > $maxLen ? mb_substr($s, 0, $maxLen) . '…' : $s;
+        }
+        return $out;
+    }
+
+    /**
+     * Build template→HTML reference from the request template (id, type, label, settings keys, content keys).
+     * So structure is defined by the frontend template, not hardcoded in backend.
+     */
+    private function buildTemplateToHtmlReference(array $template): string
+    {
+        $lines = ['Template→HTML: use section id in sectionSettings; content keys for text changes.'];
+        foreach ($template['sections'] ?? [] as $section) {
+            $id = $section['id'] ?? '';
+            $type = $section['type'] ?? '';
+            $label = $section['label'] ?? '';
+            $settings = $section['settings'] ?? [];
+            $settingKeys = is_array($settings) ? array_keys($settings) : [];
+            $fieldKeys = [];
+            foreach ($section['fields'] ?? [] as $field) {
+                $key = $field['key'] ?? null;
+                if ($key !== null && $key !== '') {
+                    $fieldKeys[] = $key;
+                }
+            }
+            $settingsStr = $settingKeys !== [] ? ' settings: ' . implode(', ', $settingKeys) . '.' : '';
+            $contentStr = $fieldKeys !== [] ? ' content: ' . implode(', ', $fieldKeys) . '.' : '';
+            $lines[] = "- id={$id} type={$type} label=" . trim($label) . ".{$settingsStr}{$contentStr}";
+        }
+        return implode("\n", $lines);
     }
 
     /** Template tối thiểu gửi Gemini: chỉ id, structure, sections với id, type, label, fields chỉ key+type → giảm token. */
@@ -156,6 +232,25 @@ class EditWithAiController extends Controller
                 $fields[] = $field;
             }
             $section['fields'] = $fields;
+            $sections[] = $section;
+        }
+        $template['sections'] = $sections;
+
+        return $template;
+    }
+
+    /** Gán sectionSettings (sectionId => [key => value]) vào section.settings. */
+    private function applySectionSettings(array $template, array $sectionSettings): array
+    {
+        if (empty($sectionSettings)) {
+            return $template;
+        }
+        $sections = [];
+        foreach ($template['sections'] ?? [] as $section) {
+            $id = $section['id'] ?? null;
+            if ($id !== null && isset($sectionSettings[$id]) && is_array($sectionSettings[$id])) {
+                $section['settings'] = array_merge($section['settings'] ?? [], $sectionSettings[$id]);
+            }
             $sections[] = $section;
         }
         $template['sections'] = $sections;

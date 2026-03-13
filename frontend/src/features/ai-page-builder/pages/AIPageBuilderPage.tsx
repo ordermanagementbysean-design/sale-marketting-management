@@ -10,25 +10,38 @@ import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import CircularProgress from "@mui/material/CircularProgress";
 import Alert from "@mui/material/Alert";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import IconButton from "@mui/material/IconButton";
 import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
 import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
+import Collapse from "@mui/material/Collapse";
+import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from "@mui/icons-material";
 import { TEMPLATES, TEMPLATE_LIST } from "../templates";
-import type { TemplateConfig, TemplateId, FormValues } from "../types";
+import type { TemplateConfig, TemplateId, FormValues, FieldStyle } from "../types";
 import { getDefaultFormValues, getEffectiveValuesForPreview, normalizeDateForCountdown, normalizeTimeForCountdown } from "../utils";
 import { buildHtml } from "../buildHtml";
 import { fetchDataFromUrl, mapFetchedDataToFormValues } from "../services/fetchFromUrl";
 import { editWithAi } from "../services/editWithAi";
 
-const TEMPLATE_LABELS: Record<TemplateId, string> = {
-  long_form_product: "1️⃣ Shopify long-form product page",
-  product_showcase: "2️⃣ Product showcase landing",
-  problem_solution: "3️⃣ Problem → solution landing",
-  bundle_offer: "4️⃣ Bundle offer page",
-  viral_tiktok_product: "5️⃣ Viral TikTok product page",
-  flash_sale: "6️⃣ Flash sale landing",
-};
+/** Label cho dropdown: dùng template.name từ config (tự có khi thêm template). */
+const getTemplateOptionLabel = (option: TemplateConfig) => option.name;
+
+function parseObjectList(value: string): Record<string, string>[] {
+  if (!value || typeof value !== "string") return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 const AIPageBuilderPageComponent = () => {
   const [selectedId, setSelectedId] = useState<TemplateId | null>(null);
@@ -50,6 +63,9 @@ const AIPageBuilderPageComponent = () => {
   } | null>(null);
   /** Template từ AI (sau khi chỉnh cấu trúc theo instruction); dùng để render preview cùng data form hiện tại */
   const [previewTemplate, setPreviewTemplate] = useState<TemplateConfig | null>(null);
+  const [fullScreenPreviewOpen, setFullScreenPreviewOpen] = useState(false);
+  /** section.id -> true = collapsed. Undefined/false = expanded. */
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
   const template = selectedId ? TEMPLATES[selectedId] : null;
   /** Template dùng cho preview: ưu tiên template từ AI nếu có, không thì template đang chọn */
@@ -64,6 +80,58 @@ const AIPageBuilderPageComponent = () => {
   const updateField = useCallback((key: string, value: string | number) => {
     setFormValues((prev) => ({ ...prev, [key]: value }));
   }, []);
+
+  /** Cập nhật một phần tử trong field kiểu image_list (value ở form là chuỗi nhiều dòng). */
+  const updateImageListItem = useCallback((key: string, index: number, value: string, currentLength: number) => {
+    setFormValues((prev) => {
+      const current = String(prev[key] ?? "").split(/\n/);
+      const next = current.length >= currentLength ? [...current] : [...Array.from({ length: currentLength }, (_, i) => current[i] ?? "")];
+      next[index] = value;
+      return { ...prev, [key]: next.join("\n") };
+    });
+  }, []);
+
+  /** Thêm một ô ảnh trống vào cuối image_list. */
+  const appendImageListItem = useCallback((key: string) => {
+    setFormValues((prev) => {
+      const current = String(prev[key] ?? "").split(/\n/).filter(Boolean);
+      return { ...prev, [key]: [...current, ""].join("\n") };
+    });
+  }, []);
+
+  /** Cập nhật một ô trong object_list (value = JSON array of objects). */
+  const updateObjectListItem = useCallback((key: string, index: number, subKey: string, value: string) => {
+    setFormValues((prev) => {
+      const arr = parseObjectList(String(prev[key] ?? "[]"));
+      const next = arr.length > index ? [...arr] : [...arr, ...Array.from({ length: index - arr.length + 1 }, () => ({} as Record<string, string>))];
+      next[index] = { ...(next[index] || {}), [subKey]: value };
+      return { ...prev, [key]: JSON.stringify(next) };
+    });
+  }, []);
+
+  /** Thêm một dòng trống vào object_list. */
+  const appendObjectListItem = useCallback((key: string, listItemKeys: string[]) => {
+    setFormValues((prev) => {
+      const arr = parseObjectList(String(prev[key] ?? "[]"));
+      const empty: Record<string, string> = {};
+      listItemKeys.forEach((k) => (empty[k] = ""));
+      return { ...prev, [key]: JSON.stringify([...arr, empty]) };
+    });
+  }, []);
+
+  const toggleSectionCollapsed = useCallback((sectionId: string) => {
+    setCollapsedSections((prev) => ({ ...prev, [sectionId]: !prev[sectionId] }));
+  }, []);
+
+  const toggleExpandCollapseAll = useCallback(() => {
+    if (!template) return;
+    const allCollapsed = template.sections.every((s) => collapsedSections[s.id] === true);
+    const next = template.sections.reduce<Record<string, boolean>>((acc, s) => {
+      acc[s.id] = !allCollapsed;
+      return acc;
+    }, {});
+    setCollapsedSections(next);
+  }, [template, collapsedSections]);
 
   const handleSelectTemplate = useCallback(
     (id: TemplateId) => {
@@ -207,7 +275,7 @@ const AIPageBuilderPageComponent = () => {
           if (newValue) handleSelectTemplate(newValue.id);
           else setSelectedId(null);
         }}
-        getOptionLabel={(option) => TEMPLATE_LABELS[option.id] ?? option.name}
+        getOptionLabel={getTemplateOptionLabel}
         isOptionEqualToValue={(option, value) => option.id === value.id}
         renderInput={(params) => (
           <TextField {...params} label="Template" placeholder="Chọn hoặc gõ tìm template..." />
@@ -231,38 +299,203 @@ const AIPageBuilderPageComponent = () => {
 
           {inputMode === "manual" && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              {template.sections.map((section) => (
-                <Card key={section.id} variant="outlined">
-                  <CardContent>
-                    <Typography variant="subtitle2" color="primary" gutterBottom>
-                      {section.label}
-                    </Typography>
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mt: 1 }}>
-                      {section.fields.map((field) => (
-                        <TextField
-                          key={field.key}
-                          label={field.label}
-                          type={field.type === "number" ? "number" : "text"}
-                          multiline={field.type === "textarea"}
-                          minRows={field.type === "textarea" ? 2 : undefined}
-                          value={values[field.key] ?? ""}
-                          onChange={(e) =>
-                            updateField(
-                              field.key,
-                              field.type === "number" ? Number(e.target.value) : e.target.value
-                            )
-                          }
-                          placeholder={field.placeholder}
-                          required={field.required}
-                          sx={{ minWidth: 220 }}
-                          size="small"
-                          variant="outlined"
-                        />
-                      ))}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={toggleExpandCollapseAll}
+                  aria-label={template.sections.every((s) => collapsedSections[s.id]) ? "Mở rộng tất cả" : "Thu gọn tất cả"}
+                >
+                  {template.sections.every((s) => collapsedSections[s.id]) ? "Mở rộng tất cả" : "Thu gọn tất cả"}
+                </Button>
+              </Box>
+              {template.sections.map((section) => {
+                const isCollapsed = collapsedSections[section.id] === true;
+                return (
+                  <Card key={section.id} variant="outlined">
+                    <Box
+                      component="button"
+                      type="button"
+                      onClick={() => toggleSectionCollapsed(section.id)}
+                      sx={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        p: 1.5,
+                        pr: 0.5,
+                        textAlign: "left",
+                        border: "none",
+                        background: "none",
+                        cursor: "pointer",
+                        "&:hover": { bgcolor: "action.hover" },
+                      }}
+                      aria-expanded={!isCollapsed}
+                    >
+                      <Typography variant="subtitle2" color="primary" fontWeight={600}>
+                        {section.label}
+                      </Typography>
+                      <IconButton size="small" aria-label={isCollapsed ? "Mở rộng" : "Thu gọn"}>
+                        {isCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+                      </IconButton>
                     </Box>
-                  </CardContent>
-                </Card>
-              ))}
+                    <Collapse in={!isCollapsed}>
+                      <CardContent sx={{ pt: 0 }}>
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mt: 1 }}>
+                      {section.fields.map((field) => {
+                        const style = field.style as FieldStyle | undefined;
+                        const sxFromStyle =
+                          style && typeof style === "object"
+                            ? {
+                                ...(style.fontSize && { fontSize: style.fontSize }),
+                                ...(style.fontWeight && { fontWeight: style.fontWeight }),
+                                ...(style.color && { color: style.color }),
+                                ...(style.textAlign && { textAlign: style.textAlign }),
+                                ...(style.lineHeight && { lineHeight: style.lineHeight }),
+                                ...(style.letterSpacing && { letterSpacing: style.letterSpacing }),
+                              }
+                            : {};
+                        if (field.type === "image_list") {
+                          const raw = String(values[field.key] ?? "").trim();
+                          const lines = raw ? raw.split(/\n/).map((s) => s.trim()) : [];
+                          const items = lines.length > 0 ? lines : (field.values ?? [""]);
+                          return (
+                            <Box key={field.key} sx={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 220, width: "100%" }}>
+                              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                                {field.label}
+                                {field.required ? " *" : ""}
+                              </Typography>
+                              {items.map((url, index) => (
+                                <TextField
+                                  key={`${field.key}-${index}`}
+                                  size="small"
+                                  variant="outlined"
+                                  type="url"
+                                  placeholder={field.placeholder ?? "https://..."}
+                                  value={url}
+                                  onChange={(e) => updateImageListItem(field.key, index, e.target.value, items.length)}
+                                  sx={{ ...sxFromStyle }}
+                                />
+                              ))}
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() => appendImageListItem(field.key)}
+                                sx={{ alignSelf: "flex-start" }}
+                              >
+                                + Thêm ảnh
+                              </Button>
+                            </Box>
+                          );
+                        }
+                        if (field.type === "string_list") {
+                          const raw = String(values[field.key] ?? "").trim();
+                          const lines = raw ? raw.split(/\n/).map((s) => s.trim()) : [];
+                          const items = lines.length > 0 ? lines : (field.values as string[] | undefined) ?? [""];
+                          return (
+                            <Box key={field.key} sx={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 220, width: "100%" }}>
+                              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                                {field.label}
+                                {field.required ? " *" : ""}
+                              </Typography>
+                              {items.map((line, index) => (
+                                <TextField
+                                  key={`${field.key}-${index}`}
+                                  size="small"
+                                  variant="outlined"
+                                  placeholder={field.placeholder}
+                                  value={line}
+                                  onChange={(e) => updateImageListItem(field.key, index, e.target.value, items.length)}
+                                  sx={{ ...sxFromStyle }}
+                                />
+                              ))}
+                              <Button size="small" variant="outlined" onClick={() => appendImageListItem(field.key)} sx={{ alignSelf: "flex-start" }}>
+                                + Thêm dòng
+                              </Button>
+                            </Box>
+                          );
+                        }
+                        if (field.type === "object_list" && field.listItemKeys && field.listItemKeys.length > 0) {
+                          const arr = parseObjectList(String(values[field.key] ?? ""));
+                          const defaultArr = Array.isArray(field.values) && field.values.length > 0 && typeof field.values[0] === "object" && field.values[0] !== null ? (field.values as Record<string, string>[]) : null;
+                          const items = arr.length > 0 ? arr : defaultArr ?? [{} as Record<string, string>];
+                          return (
+                            <Box key={field.key} sx={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 280, width: "100%" }}>
+                              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                                {field.label}
+                                {field.required ? " *" : ""}
+                              </Typography>
+                              {items.map((row, index) => (
+                                <Box key={`${field.key}-${index}`} sx={{ display: "flex", flexDirection: "column", gap: 1, p: 1, border: "1px solid", borderColor: "divider", borderRadius: 1 }}>
+                                  {field.listItemKeys!.map((subKey) => (
+                                    <TextField
+                                      key={subKey}
+                                      size="small"
+                                      variant="outlined"
+                                      label={subKey}
+                                      value={row[subKey] ?? ""}
+                                      onChange={(e) => updateObjectListItem(field.key, index, subKey, e.target.value)}
+                                      multiline={subKey === "desc" || subKey === "comment" || subKey === "text" || subKey === "answer" || subKey === "a"}
+                                      minRows={subKey === "desc" || subKey === "comment" || subKey === "text" || subKey === "answer" || subKey === "a" ? 2 : undefined}
+                                    />
+                                  ))}
+                                </Box>
+                              ))}
+                              <Button size="small" variant="outlined" onClick={() => appendObjectListItem(field.key, field.listItemKeys!)} sx={{ alignSelf: "flex-start" }}>
+                                + Thêm
+                              </Button>
+                            </Box>
+                          );
+                        }
+                        if (field.options && field.options.length > 0) {
+                          const val = String(values[field.key] ?? field.defaultValue ?? "");
+                          return (
+                            <FormControl key={field.key} size="small" sx={{ minWidth: 220, ...sxFromStyle }}>
+                              <InputLabel id={`${field.key}-label`}>{field.label}</InputLabel>
+                              <Select
+                                labelId={`${field.key}-label`}
+                                value={val}
+                                label={field.label}
+                                onChange={(e) => updateField(field.key, e.target.value)}
+                              >
+                                {field.options.map((opt) => (
+                                  <MenuItem key={opt} value={opt}>
+                                    {opt}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          );
+                        }
+                        return (
+                          <TextField
+                            key={field.key}
+                            label={field.label}
+                            type={field.type === "number" ? "number" : "text"}
+                            multiline={field.type === "textarea"}
+                            minRows={field.type === "textarea" ? 2 : undefined}
+                            value={values[field.key] ?? ""}
+                            onChange={(e) =>
+                              updateField(
+                                field.key,
+                                field.type === "number" ? Number(e.target.value) : e.target.value
+                              )
+                            }
+                            placeholder={field.placeholder}
+                            required={field.required}
+                            sx={{ minWidth: 220, ...sxFromStyle }}
+                            className={style?.className}
+                            size="small"
+                            variant="outlined"
+                          />
+                        );
+                      })}
+                    </Box>
+                      </CardContent>
+                    </Collapse>
+                  </Card>
+                );
+              })}
             </Box>
           )}
 
@@ -374,12 +607,15 @@ const AIPageBuilderPageComponent = () => {
           <Typography variant="subtitle1" fontWeight={600}>
             Preview & Export
           </Typography>
-          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
             <Button variant="outlined" onClick={handleCopyHtml}>
               Copy HTML
             </Button>
             <Button variant="outlined" onClick={handleDownloadHtml}>
               Tải file HTML
+            </Button>
+            <Button variant="contained" onClick={() => setFullScreenPreviewOpen(true)}>
+              Xem full screen
             </Button>
           </Box>
           <Box
@@ -388,7 +624,8 @@ const AIPageBuilderPageComponent = () => {
               borderColor: "divider",
               borderRadius: 1,
               overflow: "hidden",
-              height: 560,
+              height: "min(85vh, 900px)",
+              minHeight: 520,
               bgcolor: "grey.100",
             }}
           >
@@ -405,6 +642,34 @@ const AIPageBuilderPageComponent = () => {
               sandbox="allow-same-origin allow-scripts"
             />
           </Box>
+          <Dialog
+            fullScreen
+            open={fullScreenPreviewOpen}
+            onClose={() => setFullScreenPreviewOpen(false)}
+            PaperProps={{ sx: { bgcolor: "grey.100" } }}
+          >
+            <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", py: 1.5 }}>
+              <Typography variant="h6">Preview full screen</Typography>
+              <IconButton aria-label="Đóng" onClick={() => setFullScreenPreviewOpen(false)} size="small">
+                ✕
+              </IconButton>
+            </DialogTitle>
+            <DialogContent sx={{ p: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+              <Box sx={{ flex: 1, minHeight: 0 }}>
+                <iframe
+                  title="Preview full screen"
+                  srcDoc={previewHtml}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    minHeight: "calc(100vh - 56px)",
+                    border: "none",
+                  }}
+                  sandbox="allow-same-origin allow-scripts"
+                />
+              </Box>
+            </DialogContent>
+          </Dialog>
         </>
       )}
     </Box>
