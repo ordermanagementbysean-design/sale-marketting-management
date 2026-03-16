@@ -727,50 +727,68 @@ function buildSectionHtml(
     }
 
     case "order_form": {
-      const buttonColor = (getSetting(section, "buttonColor", "#4F46E5") as string) || "#4F46E5";
+      const orderFormFieldsKey = (getSetting(section, "orderFormFieldsKey", "") as string) || "";
+      const orderFormFieldsJson = orderFormFieldsKey ? getVal(values, orderFormFieldsKey) : "";
+      const fromOrderFormList = orderFormFieldsKey && orderFormFieldsJson
+        ? parseJsonList<{ key?: string; label?: string; inputType?: string; inputClass?: string }>(orderFormFieldsJson)
+        : [];
+      const useOrderFormFields = fromOrderFormList.length > 0;
+
       const fieldsRaw = getSetting(section, "fields", ["email", "name"]) as string[];
       const fields = Array.isArray(fieldsRaw) ? fieldsRaw : ["email", "name"];
       const orderTitleVal = getVal(values, "order_title");
       const promoText = getVal(values, "order_promoText");
       const buttonText = getVal(values, "order_buttonText") || "Submit";
-      const hex = (v: unknown) => (typeof v === "string" && /^#[0-9A-Fa-f]{6}$/.test(v) ? v : "");
-      const inputBg = hex(getSetting(section, "inputBackgroundColor", ""));
-      const inputText = hex(getSetting(section, "inputTextColor", ""));
-      const inputBorder = hex(getSetting(section, "inputBorderColor", ""));
-      const buttonTextColor = hex(getSetting(section, "buttonTextColor", ""));
-      const inputStyleParts: string[] = [];
-      if (inputBg) inputStyleParts.push(`background-color:${inputBg}`);
-      if (inputText) inputStyleParts.push(`color:${inputText}`);
-      if (inputBorder) inputStyleParts.push(`border-color:${inputBorder}`);
-      const inputInlineStyle = inputStyleParts.length ? ` style="${escapeHtml(inputStyleParts.join("; "))}"` : "";
-      const safeColor = hex(buttonColor) || "#4F46E5";
-      const buttonStyleParts: string[] = [];
-      buttonStyleParts.push(`background-color:${safeColor}`);
-      if (buttonTextColor) buttonStyleParts.push(`color:${buttonTextColor}`);
-      const buttonInlineStyle = ` style="${escapeHtml(buttonStyleParts.join("; "))}"`;
-      const fieldLabels: Record<string, string> = { email: "Email", name: "Tên của bạn", phone: "Số điện thoại", message: "Message", address: "Địa chỉ nhận hàng" };
-      // Section background: accept hex (#RRGGBB) or CSS color names (e.g. blue, seablue) from AI
-      const backgroundColorRaw = getSetting(section, "backgroundColor", "") as string;
-      const resolvedBg = hex(backgroundColorRaw) || (typeof backgroundColorRaw === "string" && backgroundColorRaw.trim() ? backgroundColorRaw.trim() : "");
-      const isDarkOrder = !!resolvedBg;
+
+      const wrapperClass = String(getSetting(section, "orderWrapperClass", "") ?? "").trim();
+      const innerClass = String(getSetting(section, "orderInnerClass", "") ?? "").trim();
+      const titleClass = String(getSetting(section, "orderTitleClass", "") ?? "").trim();
+      const promoClass = String(getSetting(section, "orderPromoClass", "") ?? "").trim();
+      const inputClass = String(getSetting(section, "orderInputClass", "") ?? "").trim();
+      const btnClass = String(getSetting(section, "orderBtnClass", "") ?? "").trim();
+      const labelClass = String(getSetting(section, "orderLabelClass", "") ?? "").trim();
+
+      const fieldLabels: Record<string, string> = {};
+      if (!useOrderFormFields) {
+        for (const f of fields) {
+          const key = `order_field_${f}`;
+          fieldLabels[f] =
+            getVal(values, key) ||
+            (section.fields.find((x) => x.key === key)?.defaultValue as string | undefined) ||
+            f;
+        }
+      }
+
       const orderTitleHtml = orderTitleVal ? wrapWithFieldStyle(escapeHtml(orderTitleVal), section, "order_title") : "";
       const orderPromoHtml = promoText ? wrapWithFieldStyle(escapeHtml(promoText).replace(/\n/g, "<br/>"), section, "order_promoText") : "";
       const orderBtnHtml = wrapWithFieldStyle(escapeHtml(buttonText), section, "order_buttonText");
-      const wrapperClass = isDarkOrder ? "text-white py-20" : "";
-      const wrapperStyle = resolvedBg ? ` style="background-color:${escapeHtml(resolvedBg)}"` : "";
-      const innerClass = isDarkOrder ? "max-w-xl mx-auto px-6 text-center" : "max-w-md mx-auto rounded-xl border border-gray-200 p-6 bg-gray-50";
-      const titleClass = isDarkOrder ? "text-3xl font-bold mb-4 text-white" : "text-2xl font-bold text-gray-900 mb-4";
-      const promoClass = isDarkOrder ? "opacity-80 mb-10 text-gray-200" : "text-gray-600 mb-6";
-      const inputClass = isDarkOrder ? "w-full p-4 rounded text-black border border-gray-300" : "w-full px-3 py-2 border border-gray-300 rounded-lg";
-      const btnClass = isDarkOrder ? "w-full hover:opacity-90 p-4 rounded font-semibold text-lg" : "w-full py-3 font-semibold rounded-lg";
+      const labelClassAttr = labelClass ? ` ${labelClass}` : "";
+
+      const formFieldsHtml = useOrderFormFields
+        ? fromOrderFormList
+            .filter((item) => item && (item.key ?? item.label))
+            .map((item) => {
+              const key = String(item.key ?? "").trim() || "field";
+              const label = String(item.label ?? "").trim() || key;
+              const inputType = String(item.inputType ?? "text").toLowerCase();
+              const typeAttr = inputType === "email" ? "email" : inputType === "tel" ? "tel" : inputType === "textarea" ? "textarea" : "text";
+              const rowInputClass = (item.inputClass && String(item.inputClass).trim()) ? `${inputClass} ${String(item.inputClass).trim()}`.trim() : inputClass;
+              if (typeAttr === "textarea") {
+                return `<div><label class="block text-sm font-medium mb-1${labelClassAttr}">${escapeHtml(label)}</label><textarea name="${escapeHtml(key)}" class="${escapeHtml(rowInputClass)}" placeholder="${escapeHtml(label)}" rows="3"></textarea></div>`;
+              }
+              return `<div><label class="block text-sm font-medium mb-1${labelClassAttr}">${escapeHtml(label)}</label><input type="${typeAttr}" name="${escapeHtml(key)}" class="${escapeHtml(rowInputClass)}" placeholder="${escapeHtml(label)}" /></div>`;
+            })
+            .join("")
+        : fields.map((f) => `<div><label class="block text-sm font-medium mb-1${labelClassAttr}">${escapeHtml(fieldLabels[f] || f)}</label><input type="${f === "email" ? "email" : "text"}" name="${escapeHtml(f)}" class="${escapeHtml(inputClass)}" placeholder="${escapeHtml(fieldLabels[f] || f)}" /></div>`).join("");
+
       const content = `
-        <div class="container mx-auto px-4 py-12 ${wrapperClass}"${wrapperStyle} id="order">
+        <div class="container mx-auto px-4 py-12 ${wrapperClass}" id="order">
           <div class="${innerClass}">
             ${orderTitleHtml ? `<h2 class="${titleClass}">${orderTitleHtml}</h2>` : ""}
             ${orderPromoHtml ? `<p class="${promoClass}">${orderPromoHtml}</p>` : ""}
             <form class="space-y-4">
-              ${fields.map((f) => `<div><label class="block text-sm font-medium ${isDarkOrder ? "text-gray-300" : "text-gray-700"} mb-1">${escapeHtml(fieldLabels[f] || f)}</label><input type="${f === "email" ? "email" : "text"}" name="${escapeHtml(f)}" class="${inputClass}" placeholder="${escapeHtml(fieldLabels[f] || f)}"${inputInlineStyle} /></div>`).join("")}
-              <button type="submit" class="${btnClass}"${buttonInlineStyle}>${orderBtnHtml}</button>
+              ${formFieldsHtml}
+              <button type="submit" class="${btnClass}">${orderBtnHtml}</button>
             </form>
           </div>
         </div>`;

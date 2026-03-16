@@ -68,14 +68,13 @@ export interface FieldConfig {
  * - review_list: layout, layoutFieldKey (key field chọn list|slider), showStars, layoutMaxWidth, sliderSlideMinWidth, reviewsFieldKey
  * - product_info: productInfoMediaStyle, productInfoImagesFieldKey (key field danh sách ảnh, mặc định product_gallery_images), layoutMaxWidth, layoutMediaWidth, layoutAspectRatio; ảnh lấy từ field có key = productInfoImagesFieldKey (values hoặc textarea) hoặc fallback product_thumbnail + product_image_1..4; khi carousel: carouselMode, carouselIndicators, carouselControls, carouselDuration, carouselEase
  * - accordion_faq/faq: expandFirst, style, faqItemsFieldKey (key field JSON array { q, a })
- * - order_form: buttonColor (hex), fields (array of strings)
+ * - order_form: toàn bộ style bằng Tailwind class trong template (orderWrapperClass, orderInnerClass, orderTitleClass, orderPromoClass, orderInputClass, orderBtnClass, orderLabelClass); fields (array) hoặc orderFormFieldsKey (object_list với key, label, inputType, inputClass)
  *
  * Layout dùng chung (template tuỳ chỉnh độ rộng/cao):
  * - layoutMaxWidth: class Tailwind (vd: max-w-5xl, max-w-4xl)
  * - layoutMediaWidth: class width cho khối ảnh (vd: w-full sm:w-72)
  * - layoutAspectRatio: "1/1" | "16/9" | "4/3"
  * - sliderSlideMinWidth: min-width mỗi slide (vd: 280px, 300px) khi dùng slider
- * - order_form: buttonColor, backgroundColor (section background, hex), fields?, inputBackgroundColor?, inputTextColor?, inputBorderColor?, buttonTextColor?
  */
 export type SectionSettings = Record<string, string | number | boolean | string[]>;
 

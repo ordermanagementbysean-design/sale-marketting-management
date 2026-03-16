@@ -46,16 +46,27 @@ class EditWithAiController extends Controller
 
         $model = config('services.gemini.model', 'gemini-2.0-flash');
         $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . $model . ':generateContent?key=' . $apiKey;
+
+        $generationConfig = [
+            'responseMimeType' => 'application/json',
+            'temperature'      => 0.2,
+            'maxOutputTokens'  => 8192,
+        ];
+
+        // Thinking models can inject thoughtSignature into the text and break JSON parsing.
+        // - Gemini 3: thinkingLevel "minimal" = model likely won't emit thinking/signature in output.
+        // - Gemini 2.5: thinkingBudget 0 = thinking disabled, no signature.
+        if (str_contains($model, 'gemini-3')) {
+            $generationConfig['thinkingConfig'] = ['thinkingLevel' => 'minimal'];
+        } elseif (str_contains($model, 'gemini-2.5')) {
+            $generationConfig['thinkingConfig'] = ['thinkingBudget' => 0];
+        }
+
         $response = Http::timeout(60)->post($url, [
             'contents' => [
                 ['parts' => [['text' => $prompt]]],
             ],
-            'generationConfig' => [
-                'responseMimeType' => 'application/json',
-                'temperature'      => 0.2,
-                // Gemini 3 uses "thinking" tokens that count toward limit; allow enough for thought + full JSON
-                'maxOutputTokens'  => 8192,
-            ],
+            'generationConfig' => $generationConfig,
         ]);
 
         if (! $response->successful()) {
@@ -65,9 +76,39 @@ class EditWithAiController extends Controller
         }
 
         $body = $response->json();
+
+        // Log token usage for cost tracking (Gemini returns usageMetadata in camelCase)
+        $tokenUsage = ['prompt_tokens' => 0, 'output_tokens' => 0, 'total_tokens' => 0];
+        $usage = $body['usageMetadata'] ?? null;
+        if ($usage !== null) {
+            $tokenUsage['prompt_tokens'] = (int) ($usage['promptTokenCount'] ?? 0);
+            $tokenUsage['output_tokens'] = (int) ($usage['candidatesTokenCount'] ?? 0);
+            $tokenUsage['total_tokens'] = (int) ($usage['totalTokenCount'] ?? $tokenUsage['prompt_tokens'] + $tokenUsage['output_tokens']);
+            Log::info('EditWithAi Gemini token usage', [
+                'prompt_tokens'   => $tokenUsage['prompt_tokens'],
+                'output_tokens'   => $tokenUsage['output_tokens'],
+                'total_tokens'    => $tokenUsage['total_tokens'],
+                'model'           => $model,
+                'instruction_len' => strlen($instruction),
+            ]);
+        } else {
+            Log::warning('EditWithAi: Gemini response missing usageMetadata', ['body_keys' => array_keys($body)]);
+        }
+
         $text = $body['candidates'][0]['content']['parts'][0]['text'] ?? null;
         if ($text === null) {
             return response()->json(['message' => 'Gemini không trả về nội dung.'], 502);
+        }
+
+        // Gemini 3 "thinking" models inject thoughtSignature into the same text stream, breaking JSON.
+        // Strip everything from ","thoughtSignature":... onward so we only parse the actual JSON.
+        $thoughtPos = strpos($text, '"thoughtSignature"');
+        if ($thoughtPos !== false) {
+            $text = substr($text, 0, $thoughtPos);
+            $text = rtrim($text);
+            if (str_ends_with($text, ',')) {
+                $text = substr($text, 0, -1);
+            }
         }
 
         // Gemini có thể wrap trong ```json ... ``` hoặc trả raw
@@ -78,11 +119,17 @@ class EditWithAiController extends Controller
         $parsed = json_decode($text, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             $errorMessage = json_last_error_msg();
+            $finishReason = $body['candidates'][0]['finishReason'] ?? null;
+            $hint = $finishReason === 'MAX_TOKENS'
+                ? ' Phản hồi bị cắt do giới hạn token. Thử rút gọn instruction hoặc tăng maxOutputTokens.'
+                : '';
             Log::error('Không parse được JSON từ Gemini: ' . $errorMessage, [
                 'response' => $body,
             ]);
 
-            return response()->json(['message' => 'Không parse được JSON từ Gemini: ' . $errorMessage], 502);
+            return response()->json([
+                'message' => 'Không parse được JSON từ Gemini: ' . $errorMessage . $hint,
+            ], 502);
         }
 
         if (! is_array($parsed) || empty($parsed['structure']) || empty($parsed['sectionIds'])) {
@@ -98,7 +145,11 @@ class EditWithAiController extends Controller
         $template = $this->applyContentToTemplate($template, $content);
         $template = $this->applySectionSettings($template, $sectionSettings);
 
-        return response()->json(['template' => $template]);
+        return response()->json([
+            'template'    => $template,
+            'token_usage' => $tokenUsage,
+            'model'       => $model,
+        ]);
     }
 
     /** Chỉ gửi field text/textarea/url, truncate → giảm token. */

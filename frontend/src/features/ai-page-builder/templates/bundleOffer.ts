@@ -125,11 +125,32 @@ export const bundleOfferTemplate: TemplateConfig = {
       type: "order_form",
       label: "Order form",
       required: false,
-      settings: { buttonColor: "#059669", backgroundColor: "", fields: ["email", "name", "phone"] },
+      settings: {
+        orderFormFieldsKey: "order_formFields",
+        orderWrapperClass: "",
+        orderInnerClass: "max-w-md mx-auto rounded-xl border border-gray-200 p-6 bg-gray-50",
+        orderTitleClass: "text-2xl font-bold text-gray-900 mb-4",
+        orderPromoClass: "text-gray-600 mb-6",
+        orderInputClass: "w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900",
+        orderBtnClass: "w-full py-3 font-semibold rounded-lg bg-green-600 text-white hover:bg-green-700",
+        orderLabelClass: "text-gray-700",
+      },
       fields: [
         { key: "order_title", label: "Title", type: "text", required: false, defaultValue: "Get the Bundle" },
         { key: "order_promoText", label: "Promo text", type: "textarea", required: false, defaultValue: "Enter your details to secure your bundle deal." },
         { key: "order_buttonText", label: "Button text", type: "text", required: false, defaultValue: "Add to Cart" },
+        {
+          key: "order_formFields",
+          label: "Form fields (order = display order). Each row: key, label, inputType, inputClass (Tailwind, optional)",
+          type: "object_list",
+          required: false,
+          listItemKeys: ["key", "label", "inputType", "inputClass"],
+          values: [
+            { key: "email", label: "Email", inputType: "email", inputClass: "" },
+            { key: "name", label: "Your name", inputType: "text", inputClass: "" },
+            { key: "phone", label: "Phone", inputType: "tel", inputClass: "" },
+          ],
+        },
       ],
     },
     {
