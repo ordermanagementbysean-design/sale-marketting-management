@@ -444,8 +444,10 @@ const SalePeriodListPageComponent = () => {
           const s = row.start_at?.slice(0, 10);
           const e = row.end_at?.slice(0, 10);
           if (!s || !e) return 0;
+
           const total = inclusiveDaysBetweenYmd(s, e);
           const past = salePeriodDaysPastYmd(s, e);
+
           return total * 100_000 + past;
         },
         renderCell: ({ row }) => {
@@ -454,7 +456,9 @@ const SalePeriodListPageComponent = () => {
           if (!s || !e) return "–";
           const total = inclusiveDaysBetweenYmd(s, e);
           const past = salePeriodDaysPastYmd(s, e);
-          return `${total}/${past}`;
+          const totalAdRunDays = row.cost_entries?.length ?? 0;
+
+          return `${past}/${totalAdRunDays}/${total}`;
         },
       },
       {

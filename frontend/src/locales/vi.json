@@ -21,6 +21,7 @@
       "products": "Sản phẩm",
       "salePeriodList": "Danh sách đợt bán sản phẩm",
       "salePeriodStatusReport": "Báo cáo trạng thái đợt bán",
+      "salePeriodStatusReportProfitColors": "Màu theo LN%",
       "addSalePeriod": "Thêm đợt bán sản phẩm",
       "aiPageBuilder": "AI Page Builder",
       "users": "Người dùng",
@@ -32,6 +33,7 @@
       "products": "Quản lý sản phẩm",
       "salePeriodList": "Danh sách đợt bán sản phẩm",
       "salePeriodStatusReport": "Báo cáo trạng thái đợt bán",
+      "salePeriodStatusReportProfitColors": "Màu theo LN%",
       "addSalePeriod": "Thêm đợt bán sản phẩm",
       "aiPageBuilder": "AI Page Builder",
       "users": "Quản lý người dùng",
@@ -145,12 +147,47 @@
       "adsTooltipTotalRunCost": "Tổng CP ads chạy",
       "colTotalCost": "Tổng chi phí",
       "colProfitWithPct": "LN (%DT)",
+      "profitBandTooltipNoMargin": "Không có % LN (không DT hoặc chưa xác định)",
       "productPurchaseCostLabel": "Giá nhập (một đơn vị)",
       "productSellingPriceLabel": "Giá bán (một đơn vị)",
       "productFeeOrTaxLabel": "Phí / thuế (% trên doanh thu)",
       "productShippingCostLabel": "CP vận chuyển (một đơn)",
       "revenueTooltipTitle": "Cách tính doanh thu",
-      "revenueTooltipFormula": "{{orders}} × {{unitPrice}} = {{revenue}}"
+      "revenueTooltipFormula": "{{orders}} × {{unitPrice}} = {{revenue}}",
+      "profitColors": {
+        "openSettings": "Màu theo LN%…",
+        "title": "Màu dòng theo LN (%DT)",
+        "subtitle": "Ngưỡng và màu lưu trên máy chủ, áp dụng cho mọi người. So sánh với LN trên doanh thu.",
+        "loadError": "Không tải được cài đặt.",
+        "readOnlyHint": "Bạn chỉ xem được; chỉ tài khoản được phép sửa sản phẩm mới chỉnh được.",
+        "saveError": "Không lưu được.",
+        "resetError": "Không khôi phục mặc định được.",
+        "thresholdsTitle": "Ngưỡng (% trên doanh thu)",
+        "lowMaxLabel": "Hết dải “LN thấp” (bao gồm cận trên)",
+        "reachMaxLabel": "Hết dải “đạt mục tiêu” (bao gồm cận trên)",
+        "bandsHint": "Âm: ≤ 0%. Thấp: trên 0% đến hết ngưỡng thứ nhất. Đạt mục tiêu: trên ngưỡng một đến hết ngưỡng hai. Siêu: trên ngưỡng hai.",
+        "tooltipLabelsTitle": "Chữ trên tooltip (dòng)",
+        "tooltipLabelsHint": "Hiện khi di chuột dòng có màu trên báo cáo. Có thể đổi tùy ý (ví dụ “LN thấp”, “Đạt mục tiêu”).",
+        "tooltipLabelNegative": "Text dải âm (≤ 0%)",
+        "tooltipLabelLow": "Text dải thấp (> 0% … ngưỡng 1)",
+        "tooltipLabelReach": "Text dải đạt mục tiêu (giữa hai ngưỡng)",
+        "tooltipLabelSuper": "Text dải siêu (trên ngưỡng 2)",
+        "colorsTitle": "Màu",
+        "colorNegative": "LN âm",
+        "colorLow": "LN thấp",
+        "colorReach": "Đạt mục tiêu",
+        "colorSuper": "Siêu lợi nhuận",
+        "save": "Lưu",
+        "resetDefaults": "Mặc định",
+        "backToReport": "Về báo cáo",
+        "saved": "Đã lưu.",
+        "errors": {
+          "lowMaxInvalid": "Ngưỡng thứ nhất phải là số ≥ 0.",
+          "reachMaxInvalid": "Ngưỡng thứ hai phải lớn hơn ngưỡng thứ nhất.",
+          "colorInvalid": "Mỗi màu phải là mã hex #RRGGBB.",
+          "labelInvalid": "Mỗi dòng chữ tooltip không được để trống."
+        }
+      }
     },
     "salePeriodList": {
       "product": "Sản phẩm",
@@ -163,7 +200,7 @@
       "costSnapshotCount": "{{count}} lần",
       "formsVsRealOrders": "Form / Đơn",
       "periodDates": "Đợt bán",
-      "periodProgress": "Tiến độ (tổng / đã qua)"
+      "periodProgress": "Ngày (đã qua / tổng Ads run days / tổng)"
     },
     "salePeriodCosts": {
       "sectionTitle": "Ghi chi phí (tùy chọn)",

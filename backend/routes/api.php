@@ -10,6 +10,7 @@ use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\ProductSalePeriodController;
 use App\Http\Controllers\Product\ProductSalePeriodCostEntryController;
 use App\Http\Controllers\Product\ProductSalePeriodStatusReportController;
+use App\Http\Controllers\Product\ProfitRowColorSettingsController;
 use App\Http\Controllers\User\RoleController;
 use App\Http\Controllers\User\UserController;
 use App\Http\Middleware\RequireCompanyId;
@@ -27,6 +28,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/roles', [RoleController::class, 'index']);
     Route::get('/sale-periods', [ProductSalePeriodController::class, 'listAll']);
     Route::get('/sale-periods/status-report', ProductSalePeriodStatusReportController::class);
+    Route::get('/sale-periods/profit-row-color-settings', [ProfitRowColorSettingsController::class, 'show']);
+    Route::put('/sale-periods/profit-row-color-settings', [ProfitRowColorSettingsController::class, 'update']);
+    Route::post('/sale-periods/profit-row-color-settings/reset', [ProfitRowColorSettingsController::class, 'reset']);
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/eligible-users', [ProductController::class, 'eligibleUsers']);
     Route::get('/products/{product}/sale-periods', [ProductSalePeriodController::class, 'index']);

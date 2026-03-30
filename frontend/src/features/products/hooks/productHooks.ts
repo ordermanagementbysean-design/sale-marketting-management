@@ -18,6 +18,9 @@ import {
   getProducts,
   getSalePeriodsList,
   getSalePeriodsStatusReport,
+  getProfitRowColorSettings,
+  resetProfitRowColorSettings,
+  updateProfitRowColorSettings,
   updateProduct,
   updateProductAdLink,
   updateProductSalePeriod,
@@ -33,6 +36,11 @@ import type {
   UpdateProductPayload,
   UpdateProductSalePeriodPayload,
 } from "../types";
+import {
+  profitRowColorSettingsFromApi,
+  profitRowColorSettingsToApi,
+  type ProfitRowColorSettings,
+} from "../utils/profitPercentRowColors";
 
 export const productsQueryKey = ["products"] as const;
 
@@ -117,6 +125,39 @@ export function useSalePeriodsStatusReport() {
   return useQuery({
     queryKey: [...productsQueryKey, "sale-periods-status-report"],
     queryFn: getSalePeriodsStatusReport,
+  });
+}
+
+export function useProfitRowColorSettings() {
+  return useQuery({
+    queryKey: [...productsQueryKey, "profit-row-color-settings"],
+    queryFn: async () => {
+      const api = await getProfitRowColorSettings();
+      return profitRowColorSettingsFromApi(api);
+    },
+  });
+}
+
+export function useUpdateProfitRowColorSettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (settings: ProfitRowColorSettings) =>
+      updateProfitRowColorSettings(profitRowColorSettingsToApi(settings)).then((api) =>
+        profitRowColorSettingsFromApi(api)
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...productsQueryKey, "profit-row-color-settings"] });
+    },
+  });
+}
+
+export function useResetProfitRowColorSettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => resetProfitRowColorSettings().then((api) => profitRowColorSettingsFromApi(api)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...productsQueryKey, "profit-row-color-settings"] });
+    },
   });
 }
 

@@ -16,6 +16,7 @@ import type {
   UpdateProductPayload,
   UpdateProductSalePeriodPayload,
 } from "../types";
+import type { ProfitRowColorSettingsApi } from "../utils/profitPercentRowColors";
 
 interface LaravelPaginatedResponse<T> {
   data: T[];
@@ -81,6 +82,30 @@ export async function getSalePeriodsStatusReport(): Promise<SalePeriodStatusRepo
     "/api/sale-periods/status-report"
   );
   return data ?? [];
+}
+
+export async function getProfitRowColorSettings(): Promise<ProfitRowColorSettingsApi> {
+  const { data } = await axiosClient.get<ProfitRowColorSettingsApi>(
+    "/api/sale-periods/profit-row-color-settings"
+  );
+  return data;
+}
+
+export async function updateProfitRowColorSettings(
+  payload: ProfitRowColorSettingsApi
+): Promise<ProfitRowColorSettingsApi> {
+  const { data } = await axiosClient.put<ProfitRowColorSettingsApi>(
+    "/api/sale-periods/profit-row-color-settings",
+    payload
+  );
+  return data;
+}
+
+export async function resetProfitRowColorSettings(): Promise<ProfitRowColorSettingsApi> {
+  const { data } = await axiosClient.post<ProfitRowColorSettingsApi>(
+    "/api/sale-periods/profit-row-color-settings/reset"
+  );
+  return data;
 }
 
 export async function getProductSalePeriods(

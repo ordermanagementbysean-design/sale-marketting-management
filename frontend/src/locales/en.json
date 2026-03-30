@@ -21,6 +21,7 @@
       "products": "Products",
       "salePeriodList": "Product sale periods",
       "salePeriodStatusReport": "Sale period status",
+      "salePeriodStatusReportProfitColors": "Profit row colors",
       "addSalePeriod": "Add product sale period",
       "aiPageBuilder": "AI Page Builder",
       "users": "Users",
@@ -32,6 +33,7 @@
       "products": "Product Management",
       "salePeriodList": "Product sale periods",
       "salePeriodStatusReport": "Sale period status",
+      "salePeriodStatusReportProfitColors": "Profit row colors",
       "addSalePeriod": "Add product sale period",
       "aiPageBuilder": "AI Page Builder",
       "users": "User Management",
@@ -145,12 +147,47 @@
       "adsTooltipTotalRunCost": "Total ads run cost",
       "colTotalCost": "Total cost",
       "colProfitWithPct": "Profit (% Revenue)",
+      "profitBandTooltipNoMargin": "No profit margin % (no revenue or undefined)",
       "productPurchaseCostLabel": "Purchase cost (per unit)",
       "productSellingPriceLabel": "Selling price (per unit)",
       "productFeeOrTaxLabel": "Fee / tax (% of revenue)",
       "productShippingCostLabel": "Shipping cost (per order)",
       "revenueTooltipTitle": "Revenue calculation",
-      "revenueTooltipFormula": "{{orders}} × {{unitPrice}} = {{revenue}}"
+      "revenueTooltipFormula": "{{orders}} × {{unitPrice}} = {{revenue}}",
+      "profitColors": {
+        "openSettings": "Profit row colors…",
+        "title": "Profit row colors",
+        "subtitle": "Thresholds and colors are stored on the server and apply for everyone. They are compared to profit as a percent of revenue.",
+        "loadError": "Could not load settings.",
+        "readOnlyHint": "You can view these settings; only users with permission to edit products can change them.",
+        "saveError": "Could not save settings.",
+        "resetError": "Could not reset to defaults.",
+        "thresholdsTitle": "Thresholds (% of revenue)",
+        "lowMaxLabel": "End of “low profit” band (inclusive)",
+        "reachMaxLabel": "End of “reach target” band (inclusive)",
+        "bandsHint": "Negative: at or below 0%. Low: above 0% through the first threshold (inclusive). Reach target: above the first through the second threshold (inclusive). Super: above the second threshold.",
+        "tooltipLabelsTitle": "Row tooltip text",
+        "tooltipLabelsHint": "Shown when hovering a colored row on the status report. You can use any wording (e.g. “Low profit”, “Reach target”).",
+        "tooltipLabelNegative": "Text for negative band (≤ 0%)",
+        "tooltipLabelLow": "Text for low band (> 0% … first threshold)",
+        "tooltipLabelReach": "Text for reach band (between thresholds)",
+        "tooltipLabelSuper": "Text for super band (above second threshold)",
+        "colorsTitle": "Colors",
+        "colorNegative": "Negative profit",
+        "colorLow": "Low profit",
+        "colorReach": "Reach target",
+        "colorSuper": "Super profit",
+        "save": "Save",
+        "resetDefaults": "Reset to defaults",
+        "backToReport": "Back to status report",
+        "saved": "Settings saved.",
+        "errors": {
+          "lowMaxInvalid": "The first threshold must be a number ≥ 0.",
+          "reachMaxInvalid": "The second threshold must be greater than the first.",
+          "colorInvalid": "Each color must be a #RRGGBB hex value.",
+          "labelInvalid": "Each tooltip label must be non-empty."
+        }
+      }
     },
     "salePeriodList": {
       "product": "Product",
@@ -163,7 +200,7 @@
       "costSnapshotCount": "{{count}} entries",
       "formsVsRealOrders": "Forms / Orders",
       "periodDates": "Period",
-      "periodProgress": "Progress (total / elapsed)"
+      "periodProgress": "Days (elapsed / total Ads run days / total)"
     },
     "salePeriodCosts": {
       "sectionTitle": "Cost snapshot (optional)",

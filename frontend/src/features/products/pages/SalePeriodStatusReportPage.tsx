@@ -1,7 +1,9 @@
 import { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { Link as RouterLink } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -14,9 +16,13 @@ import TableRow from "@mui/material/TableRow";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import type { SxProps, Theme } from "@mui/material/styles";
-import { useSalePeriodsStatusReport } from "../hooks/productHooks";
+import { useProfitRowColorSettings, useSalePeriodsStatusReport } from "../hooks/productHooks";
 import type { SalePeriodStatusReportRow } from "../types";
 import { operatingCostTotalDisplay } from "../utils/operatingCostDisplay";
+import {
+  profitPercentBandTooltipText,
+  profitPercentRowBackground,
+} from "../utils/profitPercentRowColors";
 
 const wrapperSx: SxProps<Theme> = { width: "100%" };
 const alertSx: SxProps<Theme> = { mb: 2 };
@@ -195,6 +201,7 @@ function TotalCostCell({
 const SalePeriodStatusReportPageComponent = () => {
   const { t } = useTranslation();
   const { data: rows = [], isLoading, error } = useSalePeriodsStatusReport();
+  const { data: profitRowColors } = useProfitRowColorSettings();
 
   const operatingLabel = useMemo(
     () => t("products.salePeriodStatusReport.breakdownOperating"),
@@ -203,9 +210,14 @@ const SalePeriodStatusReportPageComponent = () => {
 
   return (
     <Box sx={wrapperSx}>
-      <Typography variant="h5" component="h1" sx={{ mb: 1 }}>
-        {t("products.salePeriodStatusReport.title")}
-      </Typography>
+      <Stack direction="row" alignItems="flex-start" justifyContent="space-between" gap={2} flexWrap="wrap" sx={{ mb: 1 }}>
+        <Typography variant="h5" component="h1">
+          {t("products.salePeriodStatusReport.title")}
+        </Typography>
+        <Button component={RouterLink} to="/products/sale-periods/status-report/profit-colors" variant="outlined" size="small">
+          {t("products.salePeriodStatusReport.profitColors.openSettings")}
+        </Button>
+      </Stack>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2, maxWidth: 720 }}>
         {t("products.salePeriodStatusReport.subtitle")}
       </Typography>
@@ -241,31 +253,66 @@ const SalePeriodStatusReportPageComponent = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.map((row) => (
-                <TableRow key={row.sale_period_id} hover>
-                  <TableCell>
-                    <ProductNameCell row={row} />
-                  </TableCell>
-                  <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
-                    {row.cost_entries_count} / {row.days_selling_until_now} / {row.period_days_total}
-                  </TableCell>
-                  <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
-                    {row.forms_received} / {row.real_orders}
-                  </TableCell>
-                  <TableCell align="right">
-                    <RevenueCell row={row} />
-                  </TableCell>
-                  <TableCell align="right">
-                    <TotalAdsMetricsCell row={row} />
-                  </TableCell>
-                  <TableCell align="right">
-                    <TotalCostCell row={row} operatingLabel={operatingLabel} />
-                  </TableCell>
-                  <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
-                    {formatAmountWithPct(row.profit, row.profit_to_revenue_percent)}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {rows.map((row) => {
+                const rowBg =
+                  profitRowColors &&
+                  profitPercentRowBackground(row.profit_to_revenue_percent, profitRowColors);
+                const rowHoverSx =
+                  rowBg != null
+                    ? {
+                        bgcolor: rowBg,
+                        "&.MuiTableRow-hover:hover": { bgcolor: rowBg },
+                      }
+                    : undefined;
+                const tooltipTitle = profitRowColors
+                  ? profitPercentBandTooltipText(row.profit_to_revenue_percent, profitRowColors) ??
+                    t("products.salePeriodStatusReport.profitBandTooltipNoMargin")
+                  : "";
+
+                const cells = (
+                  <>
+                    <TableCell>
+                      <ProductNameCell row={row} />
+                    </TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
+                      {row.cost_entries_count} / {row.days_selling_until_now} / {row.period_days_total}
+                    </TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
+                      {row.forms_received} / {row.real_orders}
+                    </TableCell>
+                    <TableCell align="right">
+                      <RevenueCell row={row} />
+                    </TableCell>
+                    <TableCell align="right">
+                      <TotalAdsMetricsCell row={row} />
+                    </TableCell>
+                    <TableCell align="right">
+                      <TotalCostCell row={row} operatingLabel={operatingLabel} />
+                    </TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
+                      {formatAmountWithPct(row.profit, row.profit_to_revenue_percent)}
+                    </TableCell>
+                  </>
+                );
+
+                return profitRowColors ? (
+                  <Tooltip
+                    key={row.sale_period_id}
+                    title={tooltipTitle}
+                    placement="top"
+                    arrow
+                    slotProps={{ tooltip: { sx: tooltipPaperSx } }}
+                  >
+                    <TableRow hover sx={rowHoverSx}>
+                      {cells}
+                    </TableRow>
+                  </Tooltip>
+                ) : (
+                  <TableRow key={row.sale_period_id} hover sx={rowHoverSx}>
+                    {cells}
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </TableContainer>
