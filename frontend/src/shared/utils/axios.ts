@@ -4,6 +4,9 @@ const axiosClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? "",
   headers: {
     "Content-Type": "application/json",
+    ...(import.meta.env.VITE_COMPANY_ID
+      ? { "X-Company-Id": String(import.meta.env.VITE_COMPANY_ID) }
+      : {}),
   },
 });
 

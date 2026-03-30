@@ -19,14 +19,25 @@ class ProductController extends Controller
     {
         $query = Product::query()->visibleToUser($request->user())->orderBy('code');
 
-        if ($request->filled('status')) {
+        if ($request->boolean('include_inactive') && Auth::user()->canEditProducts()) {
+            // product managers may list all statuses
+        } elseif ($request->filled('status')) {
             $query->where('status', (int) $request->input('status'));
+        } else {
+            $query->where('status', 1);
         }
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->boolean('exclude_in_active_sale_period')) {
+            $today = now()->toDateString();
+            $query->whereDoesntHave('salePeriods', function ($q) use ($today) {
+                $q->whereDate('start_at', '<=', $today)->whereDate('end_at', '>=', $today);
             });
         }
 
@@ -46,7 +57,11 @@ class ProductController extends Controller
             'editLogs.user:id,name,email',
             'visibilityRules',
             'allowedUsers:id,name,email,role',
-            'salePeriods' => fn ($q) => $q->with(['adLinks' => fn ($aq) => $aq->with(['orders.product'])]),
+            'salePeriods' => fn ($q) => $q->with([
+                'marketingUser:id,name,email',
+                'costEntries' => fn ($cq) => $cq->orderByDesc('created_at')->orderByDesc('id'),
+                'adLinks' => fn ($aq) => $aq->with(['orders.product']),
+            ]),
         ]);
         $product->setRelation('adLinks', $product->salePeriods->flatMap->adLinks);
 

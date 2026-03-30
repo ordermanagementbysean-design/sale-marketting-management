@@ -13,6 +13,14 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->date('start_at');
             $table->date('end_at');
+            $table->foreignId('marketing_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->unsignedInteger('forms_received')->default(0);
+            $table->unsignedInteger('real_orders')->default(0);
+            $table->decimal('purchase_cost', 15, 2)->default(0);
+            $table->decimal('selling_price', 15, 2)->default(0);
+            $table->decimal('shipping_cost', 15, 2)->default(0);
+            $table->decimal('fee_or_tax', 15, 2)->default(0);
+            $table->decimal('operating_cost', 15, 2)->default(0);
             $table->timestamps();
         });
     }

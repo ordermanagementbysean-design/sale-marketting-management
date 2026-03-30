@@ -27,6 +27,9 @@ import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { useAuth } from "@/features/auth/context/AuthContext";
+import { isYmdBeforeLocalToday } from "@/shared/utils/localDateYmd";
+import { useMarketingUsersAll } from "@/features/users/hooks/userHooks";
+import type { UserWithRoles } from "@/features/users/types";
 import {
   useCreateProductAdLink,
   useCreateProductSalePeriod,
@@ -41,6 +44,7 @@ import {
   useUpdateProductVisibility,
 } from "../hooks/productHooks";
 import type { Product, ProductAdLink, ProductSalePeriod, ProductWithLogs } from "../types";
+import { DEFAULT_SALE_PERIOD_OPERATING_COST } from "../utils/salePeriodCostForm";
 
 const VISIBILITY_DEPARTMENTS = ["marketing", "sale", "customer_service"] as const;
 type VisibilityDept = (typeof VISIBILITY_DEPARTMENTS)[number];
@@ -60,6 +64,20 @@ function createAllOption(label: string): VisibilityOption {
 const getRowId = (row: Product) => row.id;
 
 const PAGE_SIZE = 15;
+
+function marketingUserFromPeriod(period: ProductSalePeriod | null): UserWithRoles | null {
+  const mu = period?.marketing_user;
+  if (!mu) return null;
+  return {
+    id: mu.id,
+    name: mu.name,
+    email: mu.email,
+    role: "marketing",
+    email_verified_at: null,
+    created_at: "",
+    updated_at: "",
+  };
+}
 const wrapperSx: SxProps<Theme> = { width: "100%" };
 const alertSx: SxProps<Theme> = { mb: 2 };
 const toolbarSx: SxProps<Theme> = {
@@ -120,10 +138,14 @@ const ProductPageComponent = () => {
     () => ({
       page: paginationModel.page + 1,
       per_page: paginationModel.pageSize,
-      ...(statusFilter !== "" ? { status: Number(statusFilter) } : {}),
+      ...(canEditProducts && statusFilter === ""
+        ? { include_inactive: true as const }
+        : statusFilter !== ""
+          ? { status: Number(statusFilter) as 0 | 1 }
+          : {}),
       ...(search.trim() ? { search: search.trim() } : {}),
     }),
-    [paginationModel.page, paginationModel.pageSize, statusFilter, search]
+    [paginationModel.page, paginationModel.pageSize, statusFilter, search, canEditProducts]
   );
 
   const { data: productsData, isLoading, error, refetch } = useProducts(filters);
@@ -179,6 +201,20 @@ const ProductPageComponent = () => {
   const [periodStartAt, setPeriodStartAt] = useState("");
   const [periodEndAt, setPeriodEndAt] = useState("");
   const [periodError, setPeriodError] = useState("");
+  const [periodMarketingInput, setPeriodMarketingInput] = useState("");
+  const [periodMarketingUser, setPeriodMarketingUser] = useState<UserWithRoles | null>(null);
+  const [periodFormsReceived, setPeriodFormsReceived] = useState("");
+  const [periodRealOrders, setPeriodRealOrders] = useState("");
+  const [periodPurchaseCost, setPeriodPurchaseCost] = useState("");
+  const [periodSellingPrice, setPeriodSellingPrice] = useState("");
+  const [periodShippingCost, setPeriodShippingCost] = useState("");
+  const [periodFeeOrTax, setPeriodFeeOrTax] = useState("");
+  const [periodOperatingCost, setPeriodOperatingCost] = useState("");
+  const { data: periodMarketingOptions = [], isLoading: periodMarketingLoading } =
+    useMarketingUsersAll(canEditProducts);
+
+  const periodStartLocked =
+    editingPeriod != null && isYmdBeforeLocalToday(editingPeriod.start_at.slice(0, 10));
 
   const [adLinkDialogOpen, setAdLinkDialogOpen] = useState(false);
   const [adLinkSalePeriodId, setAdLinkSalePeriodId] = useState<number | "">("");
@@ -400,6 +436,17 @@ const ProductPageComponent = () => {
     setEditingPeriod(period ?? null);
     setPeriodStartAt(period ? period.start_at.slice(0, 10) : "");
     setPeriodEndAt(period ? period.end_at.slice(0, 10) : "");
+    setPeriodMarketingUser(marketingUserFromPeriod(period ?? null));
+    setPeriodMarketingInput("");
+    setPeriodFormsReceived(String(period?.forms_received ?? 0));
+    setPeriodRealOrders(String(period?.real_orders ?? 0));
+    setPeriodPurchaseCost(period?.purchase_cost != null ? String(period.purchase_cost) : "");
+    setPeriodSellingPrice(period?.selling_price != null ? String(period.selling_price) : "");
+    setPeriodShippingCost(period?.shipping_cost != null ? String(period.shipping_cost) : "");
+    setPeriodFeeOrTax(period?.fee_or_tax != null ? String(period.fee_or_tax) : "");
+    setPeriodOperatingCost(
+      period?.operating_cost != null ? String(period.operating_cost) : DEFAULT_SALE_PERIOD_OPERATING_COST
+    );
     setPeriodError("");
     setPeriodDialogOpen(true);
   }, []);
@@ -407,17 +454,59 @@ const ProductPageComponent = () => {
     setPeriodDialogOpen(false);
     setEditingPeriod(null);
     setPeriodError("");
+    setPeriodMarketingUser(null);
+    setPeriodMarketingInput("");
+    setPeriodFormsReceived("");
+    setPeriodRealOrders("");
+    setPeriodPurchaseCost("");
+    setPeriodSellingPrice("");
+    setPeriodShippingCost("");
+    setPeriodFeeOrTax("");
+    setPeriodOperatingCost("");
   }, []);
   const handleSavePeriod = useCallback(() => {
     if (!editingProduct || !canEditProducts) return;
-    if (!periodStartAt.trim() || !periodEndAt.trim()) return;
+    if (!periodStartAt.trim() || !periodEndAt.trim() || !periodMarketingUser) return;
     setPeriodError("");
+    const forms = Math.max(0, Math.floor(Number(periodFormsReceived) || 0));
+    const orders = Math.max(0, Math.floor(Number(periodRealOrders) || 0));
+    const pc = Number(String(periodPurchaseCost).replace(/,/g, "").trim());
+    const sp = Number(String(periodSellingPrice).replace(/,/g, "").trim());
+    const psc = Number(String(periodShippingCost).replace(/,/g, "").trim());
+    const fot = Number(String(periodFeeOrTax).replace(/,/g, "").trim());
+    const oc = Number(String(periodOperatingCost).replace(/,/g, "").trim());
+    if (
+      !Number.isFinite(pc) ||
+      pc < 0 ||
+      !Number.isFinite(sp) ||
+      sp < 0 ||
+      !Number.isFinite(psc) ||
+      psc < 0 ||
+      !Number.isFinite(fot) ||
+      fot < 0 ||
+      !Number.isFinite(oc) ||
+      oc < 0
+    ) {
+      setPeriodError(t("products.addSalePeriodPage.periodPricingInvalid"));
+      return;
+    }
     if (editingPeriod) {
       updatePeriodMutation.mutate(
         {
           productId: editingProduct.id,
           periodId: editingPeriod.id,
-          payload: { start_at: periodStartAt, end_at: periodEndAt },
+          payload: {
+            start_at: periodStartAt,
+            end_at: periodEndAt,
+            marketing_user_id: periodMarketingUser.id,
+            forms_received: forms,
+            real_orders: orders,
+            purchase_cost: pc,
+            selling_price: sp,
+            shipping_cost: psc,
+            fee_or_tax: fot,
+            operating_cost: oc,
+          },
         },
         {
           onSuccess: closePeriodDialog,
@@ -431,7 +520,18 @@ const ProductPageComponent = () => {
       createPeriodMutation.mutate(
         {
           productId: editingProduct.id,
-          payload: { start_at: periodStartAt, end_at: periodEndAt },
+          payload: {
+            start_at: periodStartAt,
+            end_at: periodEndAt,
+            marketing_user_id: periodMarketingUser.id,
+            forms_received: forms,
+            real_orders: orders,
+            purchase_cost: pc,
+            selling_price: sp,
+            shipping_cost: psc,
+            fee_or_tax: fot,
+            operating_cost: oc,
+          },
         },
         {
           onSuccess: closePeriodDialog,
@@ -448,6 +548,14 @@ const ProductPageComponent = () => {
     editingPeriod,
     periodStartAt,
     periodEndAt,
+    periodMarketingUser,
+    periodFormsReceived,
+    periodRealOrders,
+    periodPurchaseCost,
+    periodSellingPrice,
+    periodShippingCost,
+    periodFeeOrTax,
+    periodOperatingCost,
     createPeriodMutation,
     updatePeriodMutation,
     closePeriodDialog,
@@ -697,6 +805,14 @@ const ProductPageComponent = () => {
                   <TableRow>
                     <TableCell>{t("products.salePeriods.startAt")}</TableCell>
                     <TableCell>{t("products.salePeriods.endAt")}</TableCell>
+                    <TableCell>{t("products.salePeriods.marketingUser")}</TableCell>
+                    <TableCell align="right">{t("products.salePeriods.formsReceived")}</TableCell>
+                    <TableCell align="right">{t("products.salePeriods.realOrders")}</TableCell>
+                    <TableCell align="right">{t("products.salePeriods.periodPurchaseCost")}</TableCell>
+                    <TableCell align="right">{t("products.salePeriods.periodSellingPrice")}</TableCell>
+                    <TableCell align="right">{t("products.salePeriods.periodShippingCost")}</TableCell>
+                    <TableCell align="right">{t("products.salePeriods.periodFeeOrTax")}</TableCell>
+                    <TableCell align="right">{t("products.salePeriods.periodOperatingCost")}</TableCell>
                     {canEditProducts && <TableCell width={120} />}
                   </TableRow>
                 </TableHead>
@@ -705,6 +821,24 @@ const ProductPageComponent = () => {
                     <TableRow key={period.id}>
                       <TableCell>{period.start_at.slice(0, 10)}</TableCell>
                       <TableCell>{period.end_at.slice(0, 10)}</TableCell>
+                      <TableCell>{period.marketing_user?.name ?? "–"}</TableCell>
+                      <TableCell align="right">{period.forms_received ?? 0}</TableCell>
+                      <TableCell align="right">{period.real_orders ?? 0}</TableCell>
+                      <TableCell align="right">
+                        {period.purchase_cost != null ? Number(period.purchase_cost).toLocaleString() : "–"}
+                      </TableCell>
+                      <TableCell align="right">
+                        {period.selling_price != null ? Number(period.selling_price).toLocaleString() : "–"}
+                      </TableCell>
+                      <TableCell align="right">
+                        {period.shipping_cost != null ? Number(period.shipping_cost).toLocaleString() : "–"}
+                      </TableCell>
+                      <TableCell align="right">
+                        {period.fee_or_tax != null ? Number(period.fee_or_tax).toLocaleString() : "–"}
+                      </TableCell>
+                      <TableCell align="right">
+                        {period.operating_cost != null ? Number(period.operating_cost).toLocaleString() : "–"}
+                      </TableCell>
                       {canEditProducts && (
                         <TableCell>
                           <IconButton
@@ -961,7 +1095,7 @@ const ProductPageComponent = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={periodDialogOpen} onClose={closePeriodDialog} maxWidth="xs" fullWidth>
+      <Dialog open={periodDialogOpen} onClose={closePeriodDialog} maxWidth="sm" fullWidth>
         <DialogTitle>
           {editingPeriod ? t("products.editSalePeriod") : t("products.addSalePeriod")}
         </DialogTitle>
@@ -971,12 +1105,37 @@ const ProductPageComponent = () => {
               {periodError}
             </Alert>
           )}
+          <Autocomplete<UserWithRoles>
+            fullWidth
+            inputValue={periodMarketingInput}
+            onInputChange={(_, value) => setPeriodMarketingInput(value)}
+            options={periodMarketingOptions}
+            loading={periodMarketingLoading}
+            getOptionLabel={(option) =>
+              typeof option === "object" && option ? `${option.name} (${option.email})` : ""
+            }
+            value={periodMarketingUser}
+            onChange={(_, newValue) => setPeriodMarketingUser(newValue)}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            noOptionsText={t("products.addSalePeriodPage.noMarketingUsersFound")}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label={t("products.addSalePeriodPage.marketingUser")}
+                required={!periodMarketingUser}
+                placeholder={t("products.addSalePeriodPage.searchMarketingPlaceholder")}
+              />
+            )}
+            sx={dialogFieldSx}
+          />
           <TextField
             fullWidth
             type="date"
             label={t("products.salePeriods.startAt")}
             value={periodStartAt}
             onChange={(e) => setPeriodStartAt(e.target.value)}
+            disabled={periodStartLocked}
+            helperText={periodStartLocked ? t("products.salePeriods.startAtLockedPast") : undefined}
             InputLabelProps={{ shrink: true }}
             sx={dialogFieldSx}
           />
@@ -989,6 +1148,74 @@ const ProductPageComponent = () => {
             InputLabelProps={{ shrink: true }}
             sx={dialogFieldSx}
           />
+          <TextField
+            fullWidth
+            type="number"
+            label={t("products.salePeriods.formsReceived")}
+            value={periodFormsReceived}
+            onChange={(e) => setPeriodFormsReceived(e.target.value)}
+            inputProps={{ min: 0, step: 1 }}
+            sx={dialogFieldSx}
+          />
+          <TextField
+            fullWidth
+            type="number"
+            label={t("products.salePeriods.realOrders")}
+            value={periodRealOrders}
+            onChange={(e) => setPeriodRealOrders(e.target.value)}
+            inputProps={{ min: 0, step: 1 }}
+            sx={dialogFieldSx}
+          />
+          <TextField
+            fullWidth
+            type="number"
+            label={t("products.salePeriods.periodPurchaseCost")}
+            value={periodPurchaseCost}
+            onChange={(e) => setPeriodPurchaseCost(e.target.value)}
+            required
+            inputProps={{ min: 0, step: 0.01 }}
+            sx={dialogFieldSx}
+          />
+          <TextField
+            fullWidth
+            type="number"
+            label={t("products.salePeriods.periodSellingPrice")}
+            value={periodSellingPrice}
+            onChange={(e) => setPeriodSellingPrice(e.target.value)}
+            required
+            inputProps={{ min: 0, step: 0.01 }}
+            sx={dialogFieldSx}
+          />
+          <TextField
+            fullWidth
+            type="number"
+            label={t("products.salePeriods.periodShippingCost")}
+            value={periodShippingCost}
+            onChange={(e) => setPeriodShippingCost(e.target.value)}
+            required
+            inputProps={{ min: 0, step: 0.01 }}
+            sx={dialogFieldSx}
+          />
+          <TextField
+            fullWidth
+            type="number"
+            label={t("products.salePeriods.periodFeeOrTax")}
+            value={periodFeeOrTax}
+            onChange={(e) => setPeriodFeeOrTax(e.target.value)}
+            required
+            inputProps={{ min: 0, step: 0.01 }}
+            sx={dialogFieldSx}
+          />
+          <TextField
+            fullWidth
+            type="number"
+            label={t("products.salePeriods.periodOperatingCost")}
+            value={periodOperatingCost}
+            onChange={(e) => setPeriodOperatingCost(e.target.value)}
+            required
+            inputProps={{ min: 0, step: 0.01 }}
+            sx={dialogFieldSx}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={closePeriodDialog}>{t("users.cancel")}</Button>
@@ -998,6 +1225,12 @@ const ProductPageComponent = () => {
             disabled={
               !periodStartAt.trim() ||
               !periodEndAt.trim() ||
+              !periodMarketingUser ||
+              !periodPurchaseCost.trim() ||
+              !periodSellingPrice.trim() ||
+              !periodShippingCost.trim() ||
+              !periodFeeOrTax.trim() ||
+              !periodOperatingCost.trim() ||
               createPeriodMutation.isPending ||
               updatePeriodMutation.isPending
             }

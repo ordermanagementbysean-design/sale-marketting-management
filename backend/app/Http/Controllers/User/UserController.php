@@ -19,9 +19,24 @@ class UserController extends Controller
             abort(403, 'You do not have permission to view users.');
         }
 
-        $users = User::query()
-            ->orderBy('name')
-            ->paginate($request->integer('per_page', 15));
+        $query = User::query()->orderBy('name');
+
+        if ($request->filled('search')) {
+            $search = $request->string('search')?->value;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('email', 'like', '%'.$search.'%');
+            });
+        }
+        if ($request->filled('role')) {
+            $role = $request->string('role')?->value;
+            if (! in_array($role, UserRole::values(), true)) {
+                abort(422, 'Invalid role filter.');
+            }
+            $query->where('role', $role);
+        }
+
+        $users = $query->paginate($request->integer('per_page', 15));
 
         return response()->json($users);
     }

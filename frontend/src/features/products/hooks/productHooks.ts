@@ -6,14 +6,18 @@ import {
 import {
   createProductAdLink,
   createProductSalePeriod,
+  createProductSalePeriodCostEntry,
+  updateProductSalePeriodCostEntry,
   deleteProductAdLink,
   deleteProductSalePeriod,
   getProduct,
   getProductAdLinks,
   getProductEligibleUsers,
+  getProductSalePeriodCostEntries,
   getProductSalePeriods,
   getProducts,
   getSalePeriodsList,
+  getSalePeriodsStatusReport,
   updateProduct,
   updateProductAdLink,
   updateProductSalePeriod,
@@ -21,6 +25,7 @@ import {
 } from "../services/productApi";
 import type {
   CreateProductAdLinkPayload,
+  CreateProductSalePeriodCostEntryPayload,
   CreateProductSalePeriodPayload,
   ProductFilters,
   ProductVisibilityPayload,
@@ -38,11 +43,20 @@ export function useProducts(params?: ProductFilters) {
   });
 }
 
-/** Search products for autocomplete; only runs when enabled (e.g. dropdown open). Use with debounced search term. */
-export function useProductSearch(params: { search?: string; per_page?: number }, enabled: boolean) {
+/** Search products for autocomplete; only active (selling) products. Debounce `search` in the caller. */
+export function useProductSearch(
+  params: { search?: string; per_page?: number; exclude_in_active_sale_period?: boolean },
+  enabled: boolean
+) {
   return useQuery({
-    queryKey: [...productsQueryKey, "search", params],
-    queryFn: () => getProducts({ per_page: params.per_page ?? 25, ...params }),
+    queryKey: [...productsQueryKey, "search", { ...params, status: 1 }],
+    queryFn: () =>
+      getProducts({
+        per_page: params.per_page ?? 25,
+        status: 1,
+        search: params.search,
+        exclude_in_active_sale_period: params.exclude_in_active_sale_period,
+      }),
     enabled,
   });
 }
@@ -99,6 +113,13 @@ export function useSalePeriodsList() {
   });
 }
 
+export function useSalePeriodsStatusReport() {
+  return useQuery({
+    queryKey: [...productsQueryKey, "sale-periods-status-report"],
+    queryFn: getSalePeriodsStatusReport,
+  });
+}
+
 export function useProductSalePeriods(productId: number | null) {
   return useQuery({
     queryKey: [...productsQueryKey, productId, "sale-periods"],
@@ -126,6 +147,9 @@ export function useCreateProductSalePeriod() {
       queryClient.invalidateQueries({
         queryKey: [...productsQueryKey, "sale-periods-list"],
       });
+      queryClient.invalidateQueries({
+        queryKey: [...productsQueryKey, "sale-periods-status-report"],
+      });
     },
   });
 }
@@ -151,6 +175,9 @@ export function useUpdateProductSalePeriod() {
       queryClient.invalidateQueries({
         queryKey: [...productsQueryKey, "sale-periods-list"],
       });
+      queryClient.invalidateQueries({
+        queryKey: [...productsQueryKey, "sale-periods-status-report"],
+      });
     },
   });
 }
@@ -174,6 +201,81 @@ export function useDeleteProductSalePeriod() {
       queryClient.invalidateQueries({
         queryKey: [...productsQueryKey, "sale-periods-list"],
       });
+      queryClient.invalidateQueries({
+        queryKey: [...productsQueryKey, "sale-periods-status-report"],
+      });
+    },
+  });
+}
+
+export function useProductSalePeriodCostEntries(
+  productId: number | null,
+  periodId: number | null,
+  enabled: boolean
+) {
+  return useQuery({
+    queryKey: [...productsQueryKey, productId, periodId, "cost-entries"],
+    queryFn: () => getProductSalePeriodCostEntries(productId!, periodId!),
+    enabled: Boolean(enabled && productId != null && periodId != null),
+    retry: false,
+  });
+}
+
+export function useCreateProductSalePeriodCostEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      productId,
+      periodId,
+      payload,
+    }: {
+      productId: number;
+      periodId: number;
+      payload: CreateProductSalePeriodCostEntryPayload;
+    }) => createProductSalePeriodCostEntry(productId, periodId, payload),
+    onSuccess: (_, { productId, periodId }) => {
+      invalidateAfterCostEntryWrite(queryClient, productId, periodId);
+    },
+  });
+}
+
+function invalidateAfterCostEntryWrite(
+  queryClient: ReturnType<typeof useQueryClient>,
+  productId: number,
+  periodId: number
+): void {
+  queryClient.invalidateQueries({ queryKey: productsQueryKey });
+  queryClient.invalidateQueries({ queryKey: [...productsQueryKey, productId] });
+  queryClient.invalidateQueries({
+    queryKey: [...productsQueryKey, productId, "sale-periods"],
+  });
+  queryClient.invalidateQueries({
+    queryKey: [...productsQueryKey, "sale-periods-list"],
+  });
+  queryClient.invalidateQueries({
+    queryKey: [...productsQueryKey, productId, periodId, "cost-entries"],
+  });
+  queryClient.invalidateQueries({
+    queryKey: [...productsQueryKey, "sale-periods-status-report"],
+  });
+}
+
+export function useUpdateProductSalePeriodCostEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      productId,
+      periodId,
+      entryId,
+      payload,
+    }: {
+      productId: number;
+      periodId: number;
+      entryId: number;
+      payload: CreateProductSalePeriodCostEntryPayload;
+    }) => updateProductSalePeriodCostEntry(productId, periodId, entryId, payload),
+    onSuccess: (_, { productId, periodId }) => {
+      invalidateAfterCostEntryWrite(queryClient, productId, periodId);
     },
   });
 }

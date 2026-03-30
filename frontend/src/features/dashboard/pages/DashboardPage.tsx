@@ -11,7 +11,6 @@ import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
-import { searchOrders } from "@/features/orders/hooks/orderHooks";
 
 interface StatCardProps {
   title: string;
@@ -100,12 +99,6 @@ const quickButtonSx: SxProps<Theme> = {
 };
 const pageTitleSx: SxProps<Theme> = { mb: 3 };
 
-const STATUS_DELIVERED = "delivered";
-const STATUS_TRANSPORTING = "transporting";
-const STATUS_CANCEL = "cancel";
-
-const EMPTY_FILTERS = {} as const;
-
 const cartIcon = <ShoppingCartOutlinedIcon fontSize="medium" />;
 const pendingIcon = <PendingActionsIcon fontSize="medium" />;
 const shippingIcon = <LocalShippingOutlinedIcon fontSize="medium" />;
@@ -114,24 +107,10 @@ const trendingIcon = <TrendingUpIcon fontSize="medium" />;
 const DashboardPageComponent = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data: ordersData, isLoading } = searchOrders(EMPTY_FILTERS);
 
   const goToOrders = useCallback(() => {
     navigate("/orders");
   }, [navigate]);
-
-  const stats = useMemo(() => {
-    const total = ordersData?.total ?? 0;
-    const orders = ordersData?.data ?? [];
-    return {
-      total,
-      pending: orders.filter(
-        (o) => ![STATUS_DELIVERED, STATUS_TRANSPORTING, STATUS_CANCEL].includes(o.status)
-      ).length,
-      transporting: orders.filter((o) => o.status === STATUS_TRANSPORTING).length,
-      delivered: orders.filter((o) => o.status === STATUS_DELIVERED).length,
-    };
-  }, [ordersData]);
 
   return (
     <Box>
@@ -143,7 +122,7 @@ const DashboardPageComponent = () => {
         <Grid size={GRID_SIZE}>
           <StatCard
             title={t("dashboard.totalOrders")}
-            value={isLoading ? "—" : stats.total}
+            value="—"
             subtitle={t("dashboard.totalOrdersSub")}
             icon={cartIcon}
             color="primary.main"
@@ -153,7 +132,7 @@ const DashboardPageComponent = () => {
         <Grid size={GRID_SIZE}>
           <StatCard
             title={t("dashboard.pending")}
-            value={isLoading ? "—" : stats.pending}
+            value="—"
             subtitle={t("dashboard.pendingSub")}
             icon={pendingIcon}
             color="warning.main"
@@ -162,7 +141,7 @@ const DashboardPageComponent = () => {
         <Grid size={GRID_SIZE}>
           <StatCard
             title={t("dashboard.transporting")}
-            value={isLoading ? "—" : stats.transporting}
+            value="—"
             subtitle={t("dashboard.transportingSub")}
             icon={shippingIcon}
             color="info.main"
@@ -171,7 +150,7 @@ const DashboardPageComponent = () => {
         <Grid size={GRID_SIZE}>
           <StatCard
             title={t("dashboard.delivered")}
-            value={isLoading ? "—" : stats.delivered}
+            value="—"
             subtitle={t("dashboard.deliveredSub")}
             icon={trendingIcon}
             color="success.main"

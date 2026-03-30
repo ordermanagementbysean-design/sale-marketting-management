@@ -1,16 +1,77 @@
+export interface ProductSalePeriodCostEntry {
+  id: number;
+  product_sale_period_id: number;
+  ads_run_cost: string | number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ProductSalePeriod {
   id: number;
   product_id: number;
   start_at: string;
   end_at: string;
+  marketing_user_id?: number | null;
+  marketing_user?: { id: number; name: string; email: string };
+  /** Số form nhận (leads / forms received). */
+  forms_received?: number;
+  /** Đơn hàng thực tế. */
+  real_orders?: number;
+  purchase_cost?: string | number;
+  selling_price?: string | number;
+  shipping_cost?: string | number;
+  fee_or_tax?: string | number;
+  operating_cost?: string | number;
   created_at: string;
   updated_at: string;
   ad_links?: ProductAdLink[];
+  cost_entries?: ProductSalePeriodCostEntry[];
+}
+
+export interface CreateProductSalePeriodCostEntryPayload {
+  ads_run_cost: number;
 }
 
 /** Sale period with product and ad_links for list view */
 export interface SalePeriodListItem extends ProductSalePeriod {
   product: { id: number; name: string; code: string };
+}
+
+export interface SalePeriodStatusReportCostBreakdown {
+  total_input_cost: number;
+  risk_cost: number;
+  shipping_cost: number;
+  total_fee_tax: number;
+  operating_cost: number;
+}
+
+/** Row from GET /api/sale-periods/status-report */
+export interface SalePeriodStatusReportRow {
+  sale_period_id: number;
+  product_id: number;
+  product: { id: number; name: string; code: string } | null;
+  purchase_cost: number;
+  selling_price: number;
+  fee_or_tax: number;
+  shipping_cost: number;
+  start_at: string;
+  end_at: string;
+  period_days_total: number;
+  days_selling_until_now: number;
+  forms_received: number;
+  real_orders: number;
+  revenue: number;
+  total_ads_run_cost: number;
+  ads_run_cost_per_form: number | null;
+  ads_run_cost_per_order: number | null;
+  ad_cost_to_revenue_percent: number | null;
+  total_cost: number;
+  total_cost_breakdown: SalePeriodStatusReportCostBreakdown;
+  /** Same formula as cost modal: count × operating_cost_per_entry */
+  cost_entries_count: number;
+  operating_cost_per_entry: number;
+  profit: number;
+  profit_to_revenue_percent: number | null;
 }
 
 export interface Product {
@@ -87,7 +148,11 @@ export interface ProductFilters {
   page?: number;
   per_page?: number;
   status?: number;
+  /** When true (and user can edit products), API returns active and inactive products. */
+  include_inactive?: boolean;
   search?: string;
+  /** Exclude products that have a sale period covering today. */
+  exclude_in_active_sale_period?: boolean;
 }
 
 export interface UpdateProductPayload {
@@ -123,9 +188,25 @@ export interface UpdateProductAdLinkPayload {
 export interface CreateProductSalePeriodPayload {
   start_at: string;
   end_at: string;
+  marketing_user_id: number;
+  forms_received?: number;
+  real_orders?: number;
+  purchase_cost: number;
+  selling_price: number;
+  shipping_cost: number;
+  fee_or_tax: number;
+  operating_cost?: number;
 }
 
 export interface UpdateProductSalePeriodPayload {
   start_at?: string;
   end_at?: string;
+  marketing_user_id?: number;
+  forms_received?: number;
+  real_orders?: number;
+  purchase_cost?: number;
+  selling_price?: number;
+  shipping_cost?: number;
+  fee_or_tax?: number;
+  operating_cost?: number;
 }

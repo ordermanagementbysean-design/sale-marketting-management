@@ -15,10 +15,16 @@ const retryUnlessClientError = (
   return failureCount < maxRetries;
 };
 
-export const searchOrders = (filters: OrderFilters, retries: number = 0) => {
+/** Orders list query — use only from `OrderPage` so `/api/orders` runs on that route only. */
+export const searchOrders = (
+  filters: OrderFilters,
+  retries: number = 0,
+  enabled: boolean = true
+) => {
   return useQuery<OrderResponse>({
     queryKey: ["orders", filters],
     queryFn: () => getOrders(filters),
+    enabled,
     staleTime: 1000 * 30,
     retry: (failureCount, error) =>
       retryUnlessClientError(failureCount, error, retries),

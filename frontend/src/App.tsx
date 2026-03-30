@@ -9,6 +9,7 @@ import OrderPage from "@/features/orders/pages/OrderPage";
 import ProductPage from "@/features/products/pages/ProductPage";
 import AddSalePeriodPage from "@/features/products/pages/AddSalePeriodPage";
 import SalePeriodListPage from "@/features/products/pages/SalePeriodListPage";
+import SalePeriodStatusReportPage from "@/features/products/pages/SalePeriodStatusReportPage";
 import ChangePasswordPage from "@/features/users/pages/ChangePasswordPage";
 import ProfilePage from "@/features/users/pages/ProfilePage";
 import UserPage from "@/features/users/pages/UserPage";
@@ -32,6 +33,10 @@ const App = memo(function App() {
             <Route path="orders" element={<OrderPage />} />
             <Route path="products" element={<ProductPage />} />
             <Route path="products/sale-periods" element={<SalePeriodListPage />} />
+            <Route
+              path="products/sale-periods/status-report"
+              element={<SalePeriodStatusReportPage />}
+            />
             <Route path="products/add-sale-period" element={<AddSalePeriodPage />} />
             {/* <Route path="ai-page-builder" element={<AIPageBuilderPage />} /> */}
             <Route path="users" element={<UserPage />} />

@@ -10,16 +10,24 @@ import type { SxProps, Theme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useAuth } from "@/features/auth/context/AuthContext";
+import { useMarketingUsersAll } from "@/features/users/hooks/userHooks";
+import type { UserWithRoles } from "@/features/users/types";
 import {
-  useCreateProductAdLink,
   useCreateProductSalePeriod,
+  useCreateProductSalePeriodCostEntry,
   useProductSearch,
 } from "../hooks/productHooks";
+import {
+  buildAdsOnlyCostEntryPayload,
+  DEFAULT_SALE_PERIOD_OPERATING_COST,
+  emptyAdsOnlyCostForm,
+  shouldSkipCostEntryAdsOnly,
+  type AdsOnlyCostForm,
+} from "../utils/salePeriodCostForm";
 import type { Product } from "../types";
 
 const PRODUCT_SEARCH_DEBOUNCE_MS = 300;
 const PRODUCT_SEARCH_PAGE_SIZE = 25;
-
 const wrapperSx: SxProps<Theme> = { maxWidth: 480 };
 const fieldSx: SxProps<Theme> = { mb: 2 };
 const sectionSx: SxProps<Theme> = { mt: 3, mb: 2 };
@@ -34,35 +42,82 @@ const AddSalePeriodPageComponent = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const debouncedSearch = useDebounce(productInputValue, PRODUCT_SEARCH_DEBOUNCE_MS);
   const { data: productsRes, isLoading: productsLoading } = useProductSearch(
-    { search: debouncedSearch.trim() || undefined, per_page: PRODUCT_SEARCH_PAGE_SIZE },
+    {
+      search: debouncedSearch.trim() || undefined,
+      per_page: PRODUCT_SEARCH_PAGE_SIZE,
+      exclude_in_active_sale_period: true,
+    },
     productOpen
   );
   const productOptions = productsRes?.data ?? [];
   const productId = selectedProduct?.id ?? "";
+
+  const [marketingInputValue, setMarketingInputValue] = useState("");
+  const [selectedMarketingUser, setSelectedMarketingUser] = useState<UserWithRoles | null>(null);
+  const { data: marketingOptions = [], isLoading: marketingLoading } = useMarketingUsersAll(canEditProducts);
   const [startAt, setStartAt] = useState("");
   const [endAt, setEndAt] = useState("");
-  const [adLinkName, setAdLinkName] = useState("");
-  const [adLinkUrl, setAdLinkUrl] = useState("");
-  const [adLinkIdentifier, setAdLinkIdentifier] = useState("");
-  const [adLinkClicks, setAdLinkClicks] = useState("");
-  const [adLinkCost, setAdLinkCost] = useState("");
+  const [formsReceived, setFormsReceived] = useState("");
+  const [realOrders, setRealOrders] = useState("");
+  const [periodPurchaseCost, setPeriodPurchaseCost] = useState("");
+  const [periodSellingPrice, setPeriodSellingPrice] = useState("");
+  const [periodShippingCost, setPeriodShippingCost] = useState("");
+  const [periodFeeOrTax, setPeriodFeeOrTax] = useState("");
+  const [periodOperatingCost, setPeriodOperatingCost] = useState(DEFAULT_SALE_PERIOD_OPERATING_COST);
+  const [costForm, setCostForm] = useState<AdsOnlyCostForm>(() => emptyAdsOnlyCostForm());
   const [submitError, setSubmitError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
 
   const createPeriodMutation = useCreateProductSalePeriod();
-  const createAdLinkMutation = useCreateProductAdLink();
+  const createCostEntryMutation = useCreateProductSalePeriodCostEntry();
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
       setSubmitError("");
-      setSuccessMessage("");
-      if (typeof productId !== "number" || !startAt.trim() || !endAt.trim()) return;
+      if (
+        typeof productId !== "number" ||
+        !startAt.trim() ||
+        !endAt.trim() ||
+        !selectedMarketingUser
+      )
+        return;
+
+      const pc = Number(String(periodPurchaseCost).replace(/,/g, "").trim());
+      const sp = Number(String(periodSellingPrice).replace(/,/g, "").trim());
+      const psc = Number(String(periodShippingCost).replace(/,/g, "").trim());
+      const fot = Number(String(periodFeeOrTax).replace(/,/g, "").trim());
+      const oc = Number(String(periodOperatingCost).replace(/,/g, "").trim());
+      if (
+        !Number.isFinite(pc) ||
+        pc < 0 ||
+        !Number.isFinite(sp) ||
+        sp < 0 ||
+        !Number.isFinite(psc) ||
+        psc < 0 ||
+        !Number.isFinite(fot) ||
+        fot < 0 ||
+        !Number.isFinite(oc) ||
+        oc < 0
+      ) {
+        setSubmitError(t("products.addSalePeriodPage.periodPricingInvalid"));
+        return;
+      }
 
       createPeriodMutation.mutate(
         {
           productId,
-          payload: { start_at: startAt, end_at: endAt },
+          payload: {
+            start_at: startAt,
+            end_at: endAt,
+            marketing_user_id: selectedMarketingUser.id,
+            forms_received: Math.max(0, Math.floor(Number(formsReceived) || 0)),
+            real_orders: Math.max(0, Math.floor(Number(realOrders) || 0)),
+            purchase_cost: pc,
+            selling_price: sp,
+            shipping_cost: psc,
+            fee_or_tax: fot,
+            operating_cost: oc,
+          },
         },
         {
           onError: (err: Error) => {
@@ -70,35 +125,32 @@ const AddSalePeriodPageComponent = () => {
             setSubmitError(msg ?? t("products.salePeriodOverlapError"));
           },
           onSuccess: (period) => {
-            setSuccessMessage(t("products.addSalePeriodPage.periodCreated"));
-            if (adLinkName.trim()) {
-              createAdLinkMutation.mutate(
+            const goList = () => navigate("/products/sale-periods");
+            const maybeCostThenList = () => {
+              if (shouldSkipCostEntryAdsOnly(costForm)) {
+                goList();
+                return;
+              }
+              const costPayload = buildAdsOnlyCostEntryPayload(costForm.ads);
+              if (!costPayload) {
+                setSubmitError(t("products.addSalePeriodPage.costEntryInvalid"));
+                return;
+              }
+              createCostEntryMutation.mutate(
                 {
                   productId,
-                  payload: {
-                    product_sale_period_id: period.id,
-                    name: adLinkName.trim(),
-                    ad_url: adLinkUrl.trim() || null,
-                    ad_identifier: adLinkIdentifier.trim() || null,
-                    clicks: Number(adLinkClicks) || 0,
-                    ad_cost: Number(adLinkCost) || 0,
-                  },
+                  periodId: period.id,
+                  payload: costPayload,
                 },
                 {
-                  onSuccess: () => {
-                    setSuccessMessage(t("products.addSalePeriodPage.periodAndAdLinkCreated"));
-                    setAdLinkName("");
-                    setAdLinkUrl("");
-                    setAdLinkIdentifier("");
-                    setAdLinkClicks("");
-                    setAdLinkCost("");
-                  },
+                  onSuccess: goList,
                   onError: () => {
-                    setSubmitError(t("products.addSalePeriodPage.adLinkCreateError"));
+                    setSubmitError(t("products.addSalePeriodPage.costEntryCreateError"));
                   },
                 }
               );
-            }
+            };
+            maybeCostThenList();
           },
         }
       );
@@ -107,13 +159,18 @@ const AddSalePeriodPageComponent = () => {
       productId,
       startAt,
       endAt,
-      adLinkName,
-      adLinkUrl,
-      adLinkIdentifier,
-      adLinkClicks,
-      adLinkCost,
+      periodPurchaseCost,
+      periodSellingPrice,
+      periodShippingCost,
+      periodFeeOrTax,
+      periodOperatingCost,
+      formsReceived,
+      realOrders,
+      costForm,
+      selectedMarketingUser,
       createPeriodMutation,
-      createAdLinkMutation,
+      createCostEntryMutation,
+      navigate,
       t,
     ]
   );
@@ -121,22 +178,27 @@ const AddSalePeriodPageComponent = () => {
   const handleReset = useCallback(() => {
     setSelectedProduct(null);
     setProductInputValue("");
+    setSelectedMarketingUser(null);
+    setMarketingInputValue("");
     setStartAt("");
     setEndAt("");
-    setAdLinkName("");
-    setAdLinkUrl("");
-    setAdLinkIdentifier("");
-    setAdLinkClicks("");
-    setAdLinkCost("");
+    setFormsReceived("");
+    setRealOrders("");
+    setPeriodPurchaseCost("");
+    setPeriodSellingPrice("");
+    setPeriodShippingCost("");
+    setPeriodFeeOrTax("");
+    setPeriodOperatingCost(DEFAULT_SALE_PERIOD_OPERATING_COST);
+    setCostForm(emptyAdsOnlyCostForm());
     setSubmitError("");
-    setSuccessMessage("");
   }, []);
 
   const goToProducts = useCallback(() => {
     navigate("/products");
   }, [navigate]);
 
-  const isPending = createPeriodMutation.isPending || createAdLinkMutation.isPending;
+  const isPending =
+    createPeriodMutation.isPending || createCostEntryMutation.isPending;
 
   if (!canEditProducts) {
     return (
@@ -165,12 +227,6 @@ const AddSalePeriodPageComponent = () => {
           {submitError}
         </Alert>
       )}
-      {successMessage && (
-        <Alert severity="success" sx={fieldSx} onClose={() => setSuccessMessage("")}>
-          {successMessage}
-        </Alert>
-      )}
-
       <Autocomplete<Product>
         fullWidth
         open={productOpen}
@@ -191,6 +247,30 @@ const AddSalePeriodPageComponent = () => {
             label={t("products.addSalePeriodPage.product")}
             required={!selectedProduct}
             placeholder={t("products.addSalePeriodPage.searchProductPlaceholder")}
+          />
+        )}
+        sx={fieldSx}
+      />
+
+      <Autocomplete<UserWithRoles>
+        fullWidth
+        inputValue={marketingInputValue}
+        onInputChange={(_, value) => setMarketingInputValue(value)}
+        options={marketingOptions}
+        loading={marketingLoading}
+        getOptionLabel={(option) =>
+          typeof option === "object" && option ? `${option.name} (${option.email})` : ""
+        }
+        value={selectedMarketingUser}
+        onChange={(_, newValue) => setSelectedMarketingUser(newValue)}
+        isOptionEqualToValue={(option, value) => option.id === value.id}
+        noOptionsText={t("products.addSalePeriodPage.noMarketingUsersFound")}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label={t("products.addSalePeriodPage.marketingUser")}
+            required={!selectedMarketingUser}
+            placeholder={t("products.addSalePeriodPage.searchMarketingPlaceholder")}
           />
         )}
         sx={fieldSx}
@@ -217,50 +297,93 @@ const AddSalePeriodPageComponent = () => {
         sx={fieldSx}
       />
 
+      <TextField
+        fullWidth
+        type="number"
+        label={t("products.salePeriods.formsReceived")}
+        value={formsReceived}
+        onChange={(e) => setFormsReceived(e.target.value)}
+        inputProps={{ min: 0, step: 1 }}
+        placeholder="0"
+        sx={fieldSx}
+      />
+      <TextField
+        fullWidth
+        type="number"
+        label={t("products.salePeriods.realOrders")}
+        value={realOrders}
+        onChange={(e) => setRealOrders(e.target.value)}
+        inputProps={{ min: 0, step: 1 }}
+        placeholder="0"
+        sx={fieldSx}
+      />
+
       <Typography variant="subtitle2" sx={sectionSx}>
-        {t("products.addSalePeriodPage.adLinkSection")}
+        {t("products.salePeriods.periodPricingTitle")}
+      </Typography>
+      <TextField
+        fullWidth
+        type="number"
+        label={t("products.salePeriods.periodPurchaseCost")}
+        value={periodPurchaseCost}
+        onChange={(e) => setPeriodPurchaseCost(e.target.value)}
+        required
+        inputProps={{ min: 0, step: 0.01 }}
+        sx={fieldSx}
+      />
+      <TextField
+        fullWidth
+        type="number"
+        label={t("products.salePeriods.periodSellingPrice")}
+        value={periodSellingPrice}
+        onChange={(e) => setPeriodSellingPrice(e.target.value)}
+        required
+        inputProps={{ min: 0, step: 0.01 }}
+        sx={fieldSx}
+      />
+      <TextField
+        fullWidth
+        type="number"
+        label={t("products.salePeriods.periodShippingCost")}
+        value={periodShippingCost}
+        onChange={(e) => setPeriodShippingCost(e.target.value)}
+        required
+        inputProps={{ min: 0, step: 0.01 }}
+        sx={fieldSx}
+      />
+      <TextField
+        fullWidth
+        type="number"
+        label={t("products.salePeriods.periodFeeOrTax")}
+        value={periodFeeOrTax}
+        onChange={(e) => setPeriodFeeOrTax(e.target.value)}
+        required
+        inputProps={{ min: 0, step: 0.01 }}
+        sx={fieldSx}
+      />
+      <TextField
+        fullWidth
+        type="number"
+        label={t("products.salePeriods.periodOperatingCost")}
+        value={periodOperatingCost}
+        onChange={(e) => setPeriodOperatingCost(e.target.value)}
+        required
+        inputProps={{ min: 0, step: 100000 }}
+        sx={fieldSx}
+      />
+
+      <Typography variant="subtitle2" sx={sectionSx}>
+        {t("products.salePeriodCosts.sectionTitle")}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        {t("products.addSalePeriodPage.adLinkSectionDesc")}
+        {t("products.addSalePeriodPage.costSnapshotDesc")}
       </Typography>
       <TextField
         fullWidth
-        label={t("products.adLinks.name")}
-        value={adLinkName}
-        onChange={(e) => setAdLinkName(e.target.value)}
-        placeholder={t("products.addSalePeriodPage.adLinkOptional")}
-        sx={fieldSx}
-      />
-      <TextField
-        fullWidth
-        label={t("products.adLinks.adUrl")}
-        value={adLinkUrl}
-        onChange={(e) => setAdLinkUrl(e.target.value)}
-        placeholder="https://..."
-        sx={fieldSx}
-      />
-      <TextField
-        fullWidth
-        label={t("products.adLinks.adIdentifier")}
-        value={adLinkIdentifier}
-        onChange={(e) => setAdLinkIdentifier(e.target.value)}
-        sx={fieldSx}
-      />
-      <TextField
-        fullWidth
         type="number"
-        label={t("products.adLinks.clicks")}
-        value={adLinkClicks}
-        onChange={(e) => setAdLinkClicks(e.target.value)}
-        inputProps={{ min: 0 }}
-        sx={fieldSx}
-      />
-      <TextField
-        fullWidth
-        type="number"
-        label={t("products.adLinks.adCost")}
-        value={adLinkCost}
-        onChange={(e) => setAdLinkCost(e.target.value)}
+        label={t("products.salePeriodCosts.adsRunCost")}
+        value={costForm.ads}
+        onChange={(e) => setCostForm((f) => ({ ...f, ads: e.target.value }))}
         inputProps={{ min: 0, step: 0.01 }}
         sx={fieldSx}
       />
@@ -269,7 +392,18 @@ const AddSalePeriodPageComponent = () => {
         <Button
           type="submit"
           variant="contained"
-          disabled={isPending || productId === "" || !startAt.trim() || !endAt.trim()}
+          disabled={
+            isPending ||
+            productId === "" ||
+            !startAt.trim() ||
+            !endAt.trim() ||
+            !selectedMarketingUser ||
+            !periodPurchaseCost.trim() ||
+            !periodSellingPrice.trim() ||
+            !periodShippingCost.trim() ||
+            !periodFeeOrTax.trim() ||
+            !periodOperatingCost.trim()
+          }
         >
           {isPending ? t("users.saving") : t("products.addSalePeriodPage.submit")}
         </Button>

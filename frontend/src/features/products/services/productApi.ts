@@ -1,14 +1,17 @@
 import axiosClient from "@/shared/utils/axios";
 import type {
   CreateProductAdLinkPayload,
+  CreateProductSalePeriodCostEntryPayload,
   CreateProductSalePeriodPayload,
   Product,
   ProductAdLink,
   ProductFilters,
   ProductSalePeriod,
+  ProductSalePeriodCostEntry,
   ProductVisibilityPayload,
   ProductWithLogs,
   SalePeriodListItem,
+  SalePeriodStatusReportRow,
   UpdateProductAdLinkPayload,
   UpdateProductPayload,
   UpdateProductSalePeriodPayload,
@@ -69,7 +72,14 @@ export async function updateProductVisibility(
 }
 
 export async function getSalePeriodsList(): Promise<SalePeriodListItem[]> {
-  const { data } = await axiosClient.get<SalePeriodListItem[]>("/api/sale-periods");
+  const { data } = await axiosClient.get<unknown>("/api/sale-periods");
+  return Array.isArray(data) ? (data as SalePeriodListItem[]) : [];
+}
+
+export async function getSalePeriodsStatusReport(): Promise<SalePeriodStatusReportRow[]> {
+  const { data } = await axiosClient.get<SalePeriodStatusReportRow[]>(
+    "/api/sale-periods/status-report"
+  );
   return data ?? [];
 }
 
@@ -112,6 +122,41 @@ export async function deleteProductSalePeriod(
   await axiosClient.delete(
     `/api/products/${productId}/sale-periods/${periodId}`
   );
+}
+
+export async function getProductSalePeriodCostEntries(
+  productId: number,
+  periodId: number
+): Promise<ProductSalePeriodCostEntry[]> {
+  const { data } = await axiosClient.get<ProductSalePeriodCostEntry[]>(
+    `/api/products/${productId}/sale-periods/${periodId}/cost-entries`
+  );
+  return data ?? [];
+}
+
+export async function createProductSalePeriodCostEntry(
+  productId: number,
+  periodId: number,
+  payload: CreateProductSalePeriodCostEntryPayload
+): Promise<ProductSalePeriodCostEntry> {
+  const { data } = await axiosClient.post<ProductSalePeriodCostEntry>(
+    `/api/products/${productId}/sale-periods/${periodId}/cost-entries`,
+    payload
+  );
+  return data;
+}
+
+export async function updateProductSalePeriodCostEntry(
+  productId: number,
+  periodId: number,
+  entryId: number,
+  payload: CreateProductSalePeriodCostEntryPayload
+): Promise<ProductSalePeriodCostEntry> {
+  const { data } = await axiosClient.put<ProductSalePeriodCostEntry>(
+    `/api/products/${productId}/sale-periods/${periodId}/cost-entries/${entryId}`,
+    payload
+  );
+  return data;
 }
 
 export async function getProductAdLinks(productId: number): Promise<ProductAdLink[]> {

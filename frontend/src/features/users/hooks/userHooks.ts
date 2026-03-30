@@ -6,6 +6,7 @@ import {
 import {
   createUser,
   deleteUser,
+  getAllMarketingUsers,
   getRoles,
   getUsers,
   updateUser,
@@ -19,6 +20,18 @@ export function useUsers(params?: { page?: number; per_page?: number }) {
   return useQuery({
     queryKey: [...usersQueryKey, params],
     queryFn: () => getUsers(params),
+  });
+}
+
+/** Load all marketing users once; filter in the UI (e.g. MUI Autocomplete). */
+export function useMarketingUsersAll(enabled: boolean) {
+  return useQuery({
+    queryKey: [...usersQueryKey, "marketing-all"],
+    queryFn: getAllMarketingUsers,
+    enabled,
+    staleTime: 5 * 60 * 1000,
+    // Do not retry on 4xx/5xx: avoids hammering the API (default is 3 retries).
+    retry: false,
   });
 }
 

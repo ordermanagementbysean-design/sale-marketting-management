@@ -24,6 +24,14 @@ class ProductSalePeriod extends Model
         'product_id',
         'start_at',
         'end_at',
+        'marketing_user_id',
+        'forms_received',
+        'real_orders',
+        'purchase_cost',
+        'selling_price',
+        'shipping_cost',
+        'fee_or_tax',
+        'operating_cost',
     ];
 
     /**
@@ -32,8 +40,15 @@ class ProductSalePeriod extends Model
     protected function casts(): array
     {
         return [
-            'start_at' => 'date',
-            'end_at'   => 'date',
+            'start_at'        => 'date',
+            'end_at'          => 'date',
+            'forms_received'  => 'integer',
+            'real_orders'     => 'integer',
+            'purchase_cost'   => 'decimal:2',
+            'selling_price'   => 'decimal:2',
+            'shipping_cost'   => 'decimal:2',
+            'fee_or_tax'      => 'decimal:2',
+            'operating_cost'  => 'decimal:2',
         ];
     }
 
@@ -42,8 +57,18 @@ class ProductSalePeriod extends Model
         return $this->belongsTo(Product::class);
     }
 
+    public function marketingUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'marketing_user_id');
+    }
+
     public function adLinks(): HasMany
     {
         return $this->hasMany(ProductAdLink::class, 'product_sale_period_id');
+    }
+
+    public function costEntries(): HasMany
+    {
+        return $this->hasMany(ProductSalePeriodCostEntry::class, 'product_sale_period_id');
     }
 }
