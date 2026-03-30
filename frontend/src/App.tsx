@@ -12,7 +12,7 @@ import SalePeriodListPage from "@/features/products/pages/SalePeriodListPage";
 import ChangePasswordPage from "@/features/users/pages/ChangePasswordPage";
 import ProfilePage from "@/features/users/pages/ProfilePage";
 import UserPage from "@/features/users/pages/UserPage";
-import { AIPageBuilderPage } from "@/features/ai-page-builder/pages/AIPageBuilderPage";
+// import { AIPageBuilderPage } from "@/features/ai-page-builder/pages/AIPageBuilderPage";
 
 const App = memo(function App() {
   return (
@@ -33,7 +33,7 @@ const App = memo(function App() {
             <Route path="products" element={<ProductPage />} />
             <Route path="products/sale-periods" element={<SalePeriodListPage />} />
             <Route path="products/add-sale-period" element={<AddSalePeriodPage />} />
-            <Route path="ai-page-builder" element={<AIPageBuilderPage />} />
+            {/* <Route path="ai-page-builder" element={<AIPageBuilderPage />} /> */}
             <Route path="users" element={<UserPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="profile/change-password" element={<ChangePasswordPage />} />
