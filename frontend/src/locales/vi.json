@@ -20,6 +20,7 @@
       "orders": "Đơn hàng",
       "products": "Sản phẩm",
       "salePeriodList": "Danh sách đợt bán sản phẩm",
+      "salePeriodImport": "Nhập đợt bán",
       "salePeriodStatusReport": "Báo cáo trạng thái đợt bán",
       "salePeriodStatusReportProfitColors": "Màu theo LN%",
       "addSalePeriod": "Thêm đợt bán sản phẩm",
@@ -32,6 +33,7 @@
       "orders": "Quản lý đơn hàng",
       "products": "Quản lý sản phẩm",
       "salePeriodList": "Danh sách đợt bán sản phẩm",
+      "salePeriodImport": "Nhập đợt bán",
       "salePeriodStatusReport": "Báo cáo trạng thái đợt bán",
       "salePeriodStatusReportProfitColors": "Màu theo LN%",
       "addSalePeriod": "Thêm đợt bán sản phẩm",
@@ -193,6 +195,24 @@
           "labelInvalid": "Mỗi dòng chữ tooltip không được để trống."
         }
       }
+    },
+    "salePeriodImport": {
+      "title": "Nhập đợt bán",
+      "subtitle": "Tải file Excel (.xlsx). ads_run_cost là tổng CP chạy ads; ads_run_days là số bản ghi chi phí tạo ra (chia đều, ví dụ 4.000.000 / 2 ngày → 2 bản ghi 2.000.000). ads_run_cost = 0 thì ads_run_days = 0. Marketing khớp tên hoặc email (vai trò marketing). Mã sản phẩm phải tồn tại và bạn được xem.",
+      "noPermission": "Cần quyền chỉnh sản phẩm để nhập đợt bán.",
+      "templateTitle": "Mẫu & ví dụ",
+      "templateDesc": "Tải file mẫu: ví dụ ads_run_cost 4.000.000 và ads_run_days 2 (hai bản ghi chi phí). Đổi mã và email thành dữ liệu thật.",
+      "backToList": "Về danh sách đợt bán",
+      "downloadStaticExample": "Tải file .xlsx mẫu",
+      "chooseFile": "Chọn file để import",
+      "selectedFile": "Đã chọn: {{name}}",
+      "clientErrorsTitle": "{{count}} dòng lỗi khi kiểm tra file",
+      "rowPrefix": "Dòng {{row}}",
+      "readyToImport": "{{count}} dòng hợp lệ, sẵn sàng nhập.",
+      "import": "Nhập",
+      "importing": "Đang nhập…",
+      "importFailed": "Gọi nhập thất bại.",
+      "resultSummary": "Đã tạo {{periods}} đợt bán và {{entries}} bản ghi CP ads. Xem lỗi từng dòng (nếu có) bên dưới."
     },
     "salePeriodList": {
       "product": "Sản phẩm",

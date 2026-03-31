@@ -10,6 +10,8 @@ import type {
   ProductSalePeriodCostEntry,
   ProductVisibilityPayload,
   ProductWithLogs,
+  SalePeriodImportApiRow,
+  SalePeriodImportResponse,
   SalePeriodListItem,
   SalePeriodStatusReportRow,
   UpdateProductAdLinkPayload,
@@ -75,6 +77,11 @@ export async function updateProductVisibility(
 export async function getSalePeriodsList(): Promise<SalePeriodListItem[]> {
   const { data } = await axiosClient.get<unknown>("/api/sale-periods");
   return Array.isArray(data) ? (data as SalePeriodListItem[]) : [];
+}
+
+export async function importSalePeriods(rows: SalePeriodImportApiRow[]): Promise<SalePeriodImportResponse> {
+  const { data } = await axiosClient.post<SalePeriodImportResponse>("/api/sale-periods/import", { rows });
+  return data;
 }
 
 export async function getSalePeriodsStatusReport(): Promise<SalePeriodStatusReportRow[]> {

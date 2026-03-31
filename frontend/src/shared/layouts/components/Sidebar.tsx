@@ -13,6 +13,7 @@ import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import PaletteOutlinedIcon from "@mui/icons-material/PaletteOutlined";
+import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 // import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
 import { useAuth } from "@/features/auth/context/AuthContext";
 
@@ -23,6 +24,7 @@ const allMenuItems = [
   { path: "/orders", labelKey: "layout.sidebar.orders", icon: <ShoppingCartOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
   { path: "/products", labelKey: "layout.sidebar.products", icon: <Inventory2OutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
   { path: "/products/sale-periods", labelKey: "layout.sidebar.salePeriodList", icon: <CalendarMonthOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
+  { path: "/products/sale-periods/import", labelKey: "layout.sidebar.salePeriodImport", icon: <UploadFileOutlinedIcon />, requireManageUsers: false, requireEditProducts: true },
   { path: "/products/sale-periods/status-report", labelKey: "layout.sidebar.salePeriodStatusReport", icon: <AssessmentOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
   { path: "/products/sale-periods/status-report/profit-colors", labelKey: "layout.sidebar.salePeriodStatusReportProfitColors", icon: <PaletteOutlinedIcon />, requireManageUsers: true, requireEditProducts: true },
   // { path: "/ai-page-builder", labelKey: "layout.sidebar.aiPageBuilder", icon: <AutoAwesomeOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },

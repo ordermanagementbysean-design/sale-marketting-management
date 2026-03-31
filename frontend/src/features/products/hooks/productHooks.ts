@@ -18,6 +18,7 @@ import {
   getProducts,
   getSalePeriodsList,
   getSalePeriodsStatusReport,
+  importSalePeriods,
   getProfitRowColorSettings,
   resetProfitRowColorSettings,
   updateProfitRowColorSettings,
@@ -32,6 +33,7 @@ import type {
   CreateProductSalePeriodPayload,
   ProductFilters,
   ProductVisibilityPayload,
+  SalePeriodImportApiRow,
   UpdateProductAdLinkPayload,
   UpdateProductPayload,
   UpdateProductSalePeriodPayload,
@@ -125,6 +127,18 @@ export function useSalePeriodsStatusReport() {
   return useQuery({
     queryKey: [...productsQueryKey, "sale-periods-status-report"],
     queryFn: getSalePeriodsStatusReport,
+  });
+}
+
+export function useImportSalePeriods() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (rows: SalePeriodImportApiRow[]) => importSalePeriods(rows),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: productsQueryKey });
+      queryClient.invalidateQueries({ queryKey: [...productsQueryKey, "sale-periods-list"] });
+      queryClient.invalidateQueries({ queryKey: [...productsQueryKey, "sale-periods-status-report"] });
+    },
   });
 }
 

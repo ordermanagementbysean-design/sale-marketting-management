@@ -186,6 +186,34 @@ export interface UpdateProductAdLinkPayload {
   ad_cost?: number;
 }
 
+/** One row for POST /api/sale-periods/import */
+export interface SalePeriodImportApiRow {
+  product_code: string;
+  marketing_user: string;
+  start_at: string;
+  end_at: string;
+  forms_received: number;
+  real_orders: number;
+  purchase_cost: number;
+  selling_price: number;
+  shipping_cost: number;
+  fee_or_tax: number;
+  operating_cost: number;
+  ads_run_cost: number;
+  ads_run_days: number;
+}
+
+export interface SalePeriodImportRowError {
+  row: number;
+  messages: string[];
+}
+
+export interface SalePeriodImportResponse {
+  created_periods: number;
+  created_cost_entries: number;
+  row_errors: SalePeriodImportRowError[];
+}
+
 export interface CreateProductSalePeriodPayload {
   start_at: string;
   end_at: string;

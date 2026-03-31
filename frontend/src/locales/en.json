@@ -20,6 +20,7 @@
       "orders": "Orders",
       "products": "Products",
       "salePeriodList": "Product sale periods",
+      "salePeriodImport": "Import sale periods",
       "salePeriodStatusReport": "Sale period status",
       "salePeriodStatusReportProfitColors": "Profit row colors",
       "addSalePeriod": "Add product sale period",
@@ -32,6 +33,7 @@
       "orders": "Order Management",
       "products": "Product Management",
       "salePeriodList": "Product sale periods",
+      "salePeriodImport": "Import sale periods",
       "salePeriodStatusReport": "Sale period status",
       "salePeriodStatusReportProfitColors": "Profit row colors",
       "addSalePeriod": "Add product sale period",
@@ -193,6 +195,24 @@
           "labelInvalid": "Each tooltip label must be non-empty."
         }
       }
+    },
+    "salePeriodImport": {
+      "title": "Import sale periods",
+      "subtitle": "Upload an Excel file (.xlsx). ads_run_cost is total ads spend; ads_run_days is how many cost log rows to create (equal split, e.g. 4,000,000 over 2 days → two rows of 2,000,000). Use ads_run_days 0 when ads_run_cost is 0. Marketing matches name or email (marketing role). Product code must exist and be visible to you.",
+      "noPermission": "You need permission to edit products to import sale periods.",
+      "templateTitle": "Template & example",
+      "templateDesc": "Download the example below. The sample uses ads_run_cost 4,000,000 with ads_run_days 2 (two cost entries). Replace codes and emails with real data.",
+      "backToList": "Back to sale periods",
+      "downloadStaticExample": "Download example .xlsx",
+      "chooseFile": "Choose file to import",
+      "selectedFile": "Selected: {{name}}",
+      "clientErrorsTitle": "{{count}} row(s) failed validation in the file",
+      "rowPrefix": "Row {{row}}",
+      "readyToImport": "{{count}} row(s) are valid and ready to import.",
+      "import": "Import",
+      "importing": "Importing…",
+      "importFailed": "Import request failed.",
+      "resultSummary": "Created {{periods}} sale period(s) and {{entries}} ads cost entry/entries. See below for any row-level errors."
     },
     "salePeriodList": {
       "product": "Product",

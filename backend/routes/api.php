@@ -9,6 +9,7 @@ use App\Http\Controllers\Product\ProductAdLinkController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\ProductSalePeriodController;
 use App\Http\Controllers\Product\ProductSalePeriodCostEntryController;
+use App\Http\Controllers\Product\ProductSalePeriodImportController;
 use App\Http\Controllers\Product\ProductSalePeriodStatusReportController;
 use App\Http\Controllers\Product\ProfitRowColorSettingsController;
 use App\Http\Controllers\User\RoleController;
@@ -27,6 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('users', UserController::class);
     Route::get('/roles', [RoleController::class, 'index']);
     Route::get('/sale-periods', [ProductSalePeriodController::class, 'listAll']);
+    Route::post('/sale-periods/import', ProductSalePeriodImportController::class);
     Route::get('/sale-periods/status-report', ProductSalePeriodStatusReportController::class);
     Route::get('/sale-periods/profit-row-color-settings', [ProfitRowColorSettingsController::class, 'show']);
     Route::put('/sale-periods/profit-row-color-settings', [ProfitRowColorSettingsController::class, 'update']);
