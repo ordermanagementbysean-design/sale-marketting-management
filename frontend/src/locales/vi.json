@@ -101,6 +101,10 @@
   "products": {
     "editProduct": "Chỉnh sửa sản phẩm",
     "edit": "Sửa",
+    "deleteSelected": "Xóa đã chọn ({{count}})",
+    "bulkDeleteConfirm": "Xóa {{count}} sản phẩm đã chọn? Hành động này không thể hoàn tác.",
+    "bulkDeleteSuccess": "Đã xóa {{count}} sản phẩm.",
+    "bulkDeleteError": "Xóa các sản phẩm đã chọn thất bại.",
     "addProduct": "Thêm sản phẩm",
     "loadError": "Không tải được danh sách sản phẩm.",
     "searchPlaceholder": "Tìm theo tên, mã SP...",

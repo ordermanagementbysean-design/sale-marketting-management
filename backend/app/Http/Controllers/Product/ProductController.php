@@ -156,6 +156,26 @@ class ProductController extends Controller
     }
 
     /**
+     * Delete a product.
+     * Only admin, manager, director.
+     */
+    public function destroy(Request $request, Product $product): JsonResponse
+    {
+        if (! Auth::user()->canEditProducts()) {
+            abort(403, 'You do not have permission to delete products.');
+        }
+
+        // validate product is not linked to any sale periods
+        if ($product->salePeriods()->exists()) {
+            abort(422, 'Product is linked to sale periods and cannot be deleted.');
+        }
+
+        $product->delete();
+
+        return response()->json(['message' => 'Product deleted.']);
+    }
+
+    /**
      * Update product visibility: which roles/departments and optionally specific users can view.
      * Only admin, manager, director.
      */

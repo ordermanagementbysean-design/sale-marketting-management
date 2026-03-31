@@ -52,6 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/products/{product}/ad-links/{productAdLink}', [ProductAdLinkController::class, 'destroy']);
     Route::get('/products/{product}', [ProductController::class, 'show']);
     Route::put('/products/{product}', [ProductController::class, 'update']);
+    Route::delete('/products/{product}', [ProductController::class, 'destroy']);
     Route::put('/products/{product}/visibility', [ProductController::class, 'updateVisibility']);
     Route::post('/ai-page-builder/edit-with-ai', EditWithAiController::class);
 });

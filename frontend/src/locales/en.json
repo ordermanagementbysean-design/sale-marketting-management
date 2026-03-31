@@ -101,6 +101,10 @@
   "products": {
     "editProduct": "Edit product",
     "edit": "Edit",
+    "deleteSelected": "Delete selected ({{count}})",
+    "bulkDeleteConfirm": "Delete {{count}} selected product(s)? This action cannot be undone.",
+    "bulkDeleteSuccess": "Deleted {{count}} product(s).",
+    "bulkDeleteError": "Failed to delete selected products.",
     "addProduct": "Add product",
     "loadError": "Failed to load products.",
     "searchPlaceholder": "Search by name, code...",

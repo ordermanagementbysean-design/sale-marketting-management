@@ -63,6 +63,10 @@ export async function createProduct(payload: CreateProductPayload): Promise<Prod
   return data;
 }
 
+export async function deleteProduct(id: number): Promise<void> {
+  await axiosClient.delete(`/api/products/${id}`);
+}
+
 export async function getProductEligibleUsers(): Promise<
   { id: number; name: string; email: string; role: string }[]
 > {

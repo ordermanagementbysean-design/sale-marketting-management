@@ -8,6 +8,7 @@ import {
   createProductAdLink,
   createProductSalePeriod,
   createProductSalePeriodCostEntry,
+  deleteProduct,
   updateProductSalePeriodCostEntry,
   deleteProductAdLink,
   deleteProductSalePeriod,
@@ -101,6 +102,16 @@ export function useCreateProduct() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateProductPayload) => createProduct(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: productsQueryKey });
+    },
+  });
+}
+
+export function useDeleteProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => deleteProduct(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productsQueryKey });
     },

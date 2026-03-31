@@ -11,6 +11,7 @@ import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
+import Snackbar from "@mui/material/Snackbar";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -23,7 +24,7 @@ import IconButton from "@mui/material/IconButton";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import AddIcon from "@mui/icons-material/Add";
 import type { SxProps, Theme } from "@mui/material/styles";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import { DataGrid, GridColDef, GridRowId, GridRowSelectionModel } from "@mui/x-data-grid";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
@@ -35,6 +36,7 @@ import type { UserWithRoles } from "@/features/users/types";
 import {
   useCreateProductAdLink,
   useCreateProductSalePeriod,
+  useDeleteProduct,
   useDeleteProductAdLink,
   useDeleteProductSalePeriod,
   useProduct,
@@ -135,6 +137,16 @@ const ProductPageComponent = () => {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
+  const [bulkDeleteToast, setBulkDeleteToast] = useState<{
+    open: boolean;
+    severity: "success" | "error";
+    message: string;
+  }>({
+    open: false,
+    severity: "success",
+    message: "",
+  });
 
   const filters = useMemo(
     () => ({
@@ -154,6 +166,7 @@ const ProductPageComponent = () => {
   const productId = editingProduct?.id ?? null;
   const { data: productDetail, isLoading: loadingDetail } = useProduct(productId);
   const updateProductMutation = useUpdateProduct();
+  const deleteProductMutation = useDeleteProduct();
   const { data: eligibleUsers = [] } = useProductEligibleUsers(canEditProducts && dialogOpen);
   const updateVisibilityMutation = useUpdateProductVisibility();
   const createAdLinkMutation = useCreateProductAdLink();
@@ -176,7 +189,6 @@ const ProductPageComponent = () => {
     [error, productsData]
   );
   const rowCount = productsData?.total ?? 0;
-
   const usersByDept = useMemo(() => {
     const marketing = eligibleUsers.filter((u) => u.role === "marketing");
     const sale = eligibleUsers.filter(
@@ -434,6 +446,61 @@ const ProductPageComponent = () => {
     closeDialog,
   ]);
 
+  const handleDeleteSelected = useCallback(async () => {
+    if (!canEditProducts || selectedProductIds.length === 0) return;
+    if (!window.confirm(t("products.bulkDeleteConfirm", { count: selectedProductIds.length }))) {
+      return;
+    }
+    try {
+      await Promise.all(selectedProductIds.map((id) => deleteProductMutation.mutateAsync(id)));
+      setSelectedProductIds([]);
+      setBulkDeleteToast({
+        open: true,
+        severity: "success",
+        message: t("products.bulkDeleteSuccess", { count: selectedProductIds.length }),
+      });
+    } catch {
+      setBulkDeleteToast({
+        open: true,
+        severity: "error",
+        message: t("products.bulkDeleteError"),
+      });
+    }
+  }, [canEditProducts, selectedProductIds, t, deleteProductMutation]);
+
+  const handleCloseBulkDeleteToast = useCallback(() => {
+    setBulkDeleteToast((prev) => ({ ...prev, open: false }));
+  }, []);
+
+  const handleRowSelectionChange = useCallback(
+    (model: GridRowSelectionModel) => {
+      if (Array.isArray(model)) {
+        setSelectedProductIds(model.map((id) => Number(id)));
+        return;
+      }
+
+      if (typeof model !== "object" || model == null || !("type" in model) || !("ids" in model)) {
+        setSelectedProductIds([]);
+        return;
+      }
+
+      const { type, ids } = model as { type: "include" | "exclude"; ids: Set<GridRowId> };
+
+      if (type === "include") {
+        setSelectedProductIds(Array.from(ids, (id) => Number(id)));
+        return;
+      }
+
+      // Exclude model: selection is "all rows" minus `ids`. Empty `ids` => everything selected (MUI "select all").
+      if (ids.size === 0) {
+        setSelectedProductIds(rows.map((r) => r.id));
+        return;
+      }
+      setSelectedProductIds(rows.filter((r) => !ids.has(r.id)).map((r) => r.id));
+    },
+    [rows]
+  );
+
   const openPeriodForm = useCallback((period?: ProductSalePeriod | null) => {
     setEditingPeriod(period ?? null);
     setPeriodStartAt(period ? period.start_at.slice(0, 10) : "");
@@ -688,6 +755,16 @@ const ProductPageComponent = () => {
               {t("layout.sidebar.productImport")}
             </Button>
             <Button
+              variant="outlined"
+              color="error"
+              size="small"
+              startIcon={<DeleteOutlineIcon />}
+              onClick={handleDeleteSelected}
+              disabled={selectedProductIds.length === 0 || deleteProductMutation.isPending}
+            >
+              {t("products.deleteSelected", { count: selectedProductIds.length })}
+            </Button>
+            <Button
               variant="contained"
               size="small"
               component={RouterLink}
@@ -721,6 +798,9 @@ const ProductPageComponent = () => {
         pageSizeOptions={[10, 15, 25, 50]}
         autoHeight
         disableRowSelectionOnClick
+        disableRowSelectionExcludeModel
+        checkboxSelection={canEditProducts}
+        onRowSelectionModelChange={handleRowSelectionChange}
         sx={dataGridSx}
         onRowClick={(params) => canEditProducts && openEdit(params.row)}
       />
@@ -1342,6 +1422,20 @@ const ProductPageComponent = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <Snackbar
+        open={bulkDeleteToast.open}
+        autoHideDuration={2500}
+        onClose={handleCloseBulkDeleteToast}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleCloseBulkDeleteToast}
+          severity={bulkDeleteToast.severity}
+          variant="filled"
+        >
+          {bulkDeleteToast.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
