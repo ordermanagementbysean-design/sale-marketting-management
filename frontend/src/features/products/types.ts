@@ -168,6 +168,18 @@ export interface UpdateProductPayload {
   status?: 0 | 1;
 }
 
+export interface CreateProductPayload {
+  name: string;
+  code: string;
+  unit?: string;
+  purchase_price?: number;
+  unit_price?: number;
+  vat_percent?: number;
+  vat_code?: string | null;
+  weight_gram?: number;
+  status?: 0 | 1;
+}
+
 export interface CreateProductAdLinkPayload {
   product_sale_period_id: number;
   name: string;

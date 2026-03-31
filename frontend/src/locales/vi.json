@@ -37,6 +37,7 @@
       "salePeriodStatusReport": "Báo cáo trạng thái đợt bán",
       "salePeriodStatusReportProfitColors": "Màu theo LN%",
       "addSalePeriod": "Thêm đợt bán sản phẩm",
+      "createProduct": "Tạo sản phẩm",
       "aiPageBuilder": "AI Page Builder",
       "users": "Quản lý người dùng",
       "profile": "Hồ sơ của tôi",
@@ -98,6 +99,7 @@
   "products": {
     "editProduct": "Chỉnh sửa sản phẩm",
     "edit": "Sửa",
+    "addProduct": "Thêm sản phẩm",
     "loadError": "Không tải được danh sách sản phẩm.",
     "searchPlaceholder": "Tìm theo tên, mã SP...",
     "statusLabel": "Trạng thái",
@@ -250,6 +252,16 @@
       "summaryOperatingTotal": "CP vận hành (theo đợt)",
       "summaryOperatingPeriodNote": "Công thức: {{count}} × {{unit}} (số bản ghi chi phí × CP vận hành trên đợt).",
       "summaryAdsTotal": "Tổng CP chạy ads"
+    },
+    "createProductPage": {
+      "title": "Tạo sản phẩm",
+      "subtitle": "Nhập mã, tên và giá. Phân quyền xem mặc định là toàn bộ nhân viên theo từng phòng; có thể thu hẹp khi sửa sản phẩm.",
+      "submit": "Tạo sản phẩm",
+      "backToProducts": "Về danh sách sản phẩm",
+      "noPermission": "Bạn không có quyền tạo sản phẩm.",
+      "createError": "Không tạo được sản phẩm. Vui lòng kiểm tra và thử lại.",
+      "requiredFields": "Tên và mã sản phẩm là bắt buộc.",
+      "invalidNumbers": "Nhập số hợp lệ: giá và VAT (0–100) ≥ 0; khối lượng là số nguyên (gam)."
     },
     "addSalePeriodPage": {
       "title": "Thêm đợt bán sản phẩm",

@@ -7,6 +7,7 @@ import AdminLayout from "@/shared/layouts/AdminLayout";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage";
 import OrderPage from "@/features/orders/pages/OrderPage";
 import ProductPage from "@/features/products/pages/ProductPage";
+import CreateProductPage from "@/features/products/pages/CreateProductPage";
 import AddSalePeriodPage from "@/features/products/pages/AddSalePeriodPage";
 import SalePeriodListPage from "@/features/products/pages/SalePeriodListPage";
 import SalePeriodStatusReportPage from "@/features/products/pages/SalePeriodStatusReportPage";
@@ -34,6 +35,7 @@ const App = memo(function App() {
             <Route index element={<DashboardPage />} />
             <Route path="orders" element={<OrderPage />} />
             <Route path="products" element={<ProductPage />} />
+            <Route path="products/new" element={<CreateProductPage />} />
             <Route path="products/sale-periods" element={<SalePeriodListPage />} />
             <Route path="products/sale-periods/import" element={<SalePeriodImportPage />} />
             <Route

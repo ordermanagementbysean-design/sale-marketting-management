@@ -15,6 +15,7 @@ import {
   getProductEligibleUsers,
   getProductSalePeriodCostEntries,
   getProductSalePeriods,
+  createProduct,
   getProducts,
   getSalePeriodsList,
   getSalePeriodsStatusReport,
@@ -31,6 +32,7 @@ import type {
   CreateProductAdLinkPayload,
   CreateProductSalePeriodCostEntryPayload,
   CreateProductSalePeriodPayload,
+  CreateProductPayload,
   ProductFilters,
   ProductVisibilityPayload,
   SalePeriodImportApiRow,
@@ -87,6 +89,16 @@ export function useUpdateProduct() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: productsQueryKey });
       queryClient.invalidateQueries({ queryKey: [...productsQueryKey, id] });
+    },
+  });
+}
+
+export function useCreateProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateProductPayload) => createProduct(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: productsQueryKey });
     },
   });
 }

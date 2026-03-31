@@ -69,6 +69,7 @@ const pathToTitleKey: Record<string, string> = {
   "/": "layout.header.overview",
   "/orders": "layout.header.orders",
   "/products": "layout.header.products",
+  "/products/new": "layout.header.createProduct",
   "/products/sale-periods": "layout.header.salePeriodList",
   "/products/sale-periods/import": "layout.header.salePeriodImport",
   "/products/sale-periods/status-report": "layout.header.salePeriodStatusReport",

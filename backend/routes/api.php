@@ -34,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/sale-periods/profit-row-color-settings', [ProfitRowColorSettingsController::class, 'update']);
     Route::post('/sale-periods/profit-row-color-settings/reset', [ProfitRowColorSettingsController::class, 'reset']);
     Route::get('/products', [ProductController::class, 'index']);
+    Route::post('/products', [ProductController::class, 'store']);
     Route::get('/products/eligible-users', [ProductController::class, 'eligibleUsers']);
     Route::get('/products/{product}/sale-periods', [ProductSalePeriodController::class, 'index']);
     Route::post('/products/{product}/sale-periods', [ProductSalePeriodController::class, 'store']);

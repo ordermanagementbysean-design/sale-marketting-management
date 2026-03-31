@@ -15,6 +15,7 @@ import type {
   SalePeriodListItem,
   SalePeriodStatusReportRow,
   UpdateProductAdLinkPayload,
+  CreateProductPayload,
   UpdateProductPayload,
   UpdateProductSalePeriodPayload,
 } from "../types";
@@ -51,6 +52,11 @@ export async function updateProduct(
   payload: UpdateProductPayload
 ): Promise<Product> {
   const { data } = await axiosClient.put<Product>(`/api/products/${id}`, payload);
+  return data;
+}
+
+export async function createProduct(payload: CreateProductPayload): Promise<Product> {
+  const { data } = await axiosClient.post<Product>("/api/products", payload);
   return data;
 }
 

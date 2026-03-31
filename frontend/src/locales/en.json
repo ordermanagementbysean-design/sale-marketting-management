@@ -37,6 +37,7 @@
       "salePeriodStatusReport": "Sale period status",
       "salePeriodStatusReportProfitColors": "Profit row colors",
       "addSalePeriod": "Add product sale period",
+      "createProduct": "Create product",
       "aiPageBuilder": "AI Page Builder",
       "users": "User Management",
       "profile": "My profile",
@@ -98,6 +99,7 @@
   "products": {
     "editProduct": "Edit product",
     "edit": "Edit",
+    "addProduct": "Add product",
     "loadError": "Failed to load products.",
     "searchPlaceholder": "Search by name, code...",
     "statusLabel": "Status",
@@ -250,6 +252,16 @@
       "summaryOperatingTotal": "Operating cost (period)",
       "summaryOperatingPeriodNote": "Formula: {{count}} × {{unit}} (cost entries × operating cost per entry on the period).",
       "summaryAdsTotal": "Total ads spend"
+    },
+    "createProductPage": {
+      "title": "Create product",
+      "subtitle": "Enter product code, name, and pricing. View permissions default to all staff per department; you can narrow them when editing the product.",
+      "submit": "Create product",
+      "backToProducts": "Back to products",
+      "noPermission": "You do not have permission to create products.",
+      "createError": "Could not create the product. Please check the form and try again.",
+      "requiredFields": "Name and product code are required.",
+      "invalidNumbers": "Enter valid numbers: prices and VAT (0–100) must be zero or greater; weight must be a whole number (grams)."
     },
     "addSalePeriodPage": {
       "title": "Add product sale period",

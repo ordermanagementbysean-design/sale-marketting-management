@@ -46,6 +46,50 @@ class ProductController extends Controller
         return response()->json($products);
     }
 
+    public function store(Request $request): JsonResponse
+    {
+        if (! Auth::user()->canEditProducts()) {
+            abort(403, 'You do not have permission to create products.');
+        }
+
+        $validated = $request->validate([
+            'name'           => ['required', 'string', 'max:255'],
+            'code'           => ['required', 'string', 'max:100', 'unique:products,code'],
+            'unit'           => ['nullable', 'string', 'max:50'],
+            'purchase_price' => ['nullable', 'numeric', 'min:0'],
+            'unit_price'     => ['nullable', 'numeric', 'min:0'],
+            'vat_percent'    => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'vat_code'       => ['nullable', 'string', 'max:50'],
+            'weight_gram'    => ['nullable', 'integer', 'min:0'],
+            'status'         => ['nullable', 'integer', 'in:0,1'],
+        ]);
+
+        $payload = array_merge([
+            'unit'            => 'cái',
+            'purchase_price'  => 0,
+            'unit_price'      => 0,
+            'vat_percent'     => 0,
+            'vat_code'        => null,
+            'weight_gram'     => 0,
+            'status'          => 1,
+        ], $validated);
+
+        $product = DB::transaction(function () use ($payload) {
+            $product = Product::create($payload);
+            foreach (UserRole::productViewerRoles() as $role) {
+                ProductVisibility::create([
+                    'product_id' => $product->id,
+                    'role'       => $role,
+                    'allow_all'  => true,
+                ]);
+            }
+
+            return $product;
+        });
+
+        return response()->json($product, 201);
+    }
+
     public function show(Request $request, Product $product): JsonResponse
     {
         $canView = Product::query()->visibleToUser($request->user())->where('id', $product->id)->exists();
