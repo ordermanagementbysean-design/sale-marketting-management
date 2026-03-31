@@ -45,7 +45,7 @@ const LoginPageComponent = () => {
   const [submitting, setSubmitting] = useState(false);
 
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/profile" replace />;
   }
   if (isLoading) {
     return (

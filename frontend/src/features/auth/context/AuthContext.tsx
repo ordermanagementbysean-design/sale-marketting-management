@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       canEditProducts: can_edit_products,
       canViewSalePeriodsAndReports: can_view_sale_periods_and_reports,
     });
-    navigate("/", { replace: true });
+    navigate("/profile", { replace: true });
   }, [navigate]);
 
   const logout = useCallback(async () => {

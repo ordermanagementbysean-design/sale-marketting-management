@@ -32,7 +32,7 @@ const RequireSalePeriodReportsRouteComponent = ({
   }
 
   if (!canViewSalePeriodsAndReports) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/profile" replace />;
   }
 
   return <>{children}</>;

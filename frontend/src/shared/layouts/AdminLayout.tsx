@@ -66,7 +66,7 @@ const contentSx: SxProps<Theme> = {
 };
 
 const pathToTitleKey: Record<string, string> = {
-  "/": "layout.header.overview",
+  "/dashboard": "layout.header.overview",
   "/orders": "layout.header.orders",
   "/products": "layout.header.products",
   "/products/new": "layout.header.createProduct",
