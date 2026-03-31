@@ -50,6 +50,7 @@ export interface SalePeriodStatusReportRow {
   sale_period_id: number;
   product_id: number;
   product: { id: number; name: string; code: string } | null;
+  marketing_user?: { id: number; name: string; email: string } | null;
   purchase_cost: number;
   selling_price: number;
   fee_or_tax: number;

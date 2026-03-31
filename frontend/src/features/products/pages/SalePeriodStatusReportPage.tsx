@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link as RouterLink } from "react-router-dom";
 import Alert from "@mui/material/Alert";
@@ -13,6 +13,8 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import Autocomplete from "@mui/material/Autocomplete";
+import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import type { SxProps, Theme } from "@mui/material/styles";
@@ -26,6 +28,15 @@ import {
 
 const wrapperSx: SxProps<Theme> = { width: "100%" };
 const alertSx: SxProps<Theme> = { mb: 2 };
+
+type MarketingFilterOption = { id: number; name: string; email: string };
+type ProductFilterOption = { id: number; label: string };
+
+const reportFilterAutocompleteSx: SxProps<Theme> = {
+  flex: 1,
+  minWidth: { sm: 200 },
+  maxWidth: { sm: 360 },
+};
 
 function formatAmount(v: number): string {
   return v.toLocaleString(undefined, { maximumFractionDigits: 2 });
@@ -202,11 +213,52 @@ const SalePeriodStatusReportPageComponent = () => {
   const { t } = useTranslation();
   const { data: rows = [], isLoading, error } = useSalePeriodsStatusReport();
   const { data: profitRowColors } = useProfitRowColorSettings();
+  const [selectedMarketing, setSelectedMarketing] = useState<MarketingFilterOption | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductFilterOption | null>(null);
+
+  const marketingOptions = useMemo(() => {
+    const map = new Map<number, MarketingFilterOption>();
+    for (const row of rows) {
+      const mu = row.marketing_user;
+      if (mu) map.set(mu.id, { id: mu.id, name: mu.name, email: mu.email });
+    }
+    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }, [rows]);
+
+  const productOptions = useMemo(() => {
+    const map = new Map<number, ProductFilterOption>();
+    for (const row of rows) {
+      const p = row.product;
+      const label = p ? `${p.name} (${p.code})` : `#${row.product_id}`;
+      map.set(row.product_id, { id: row.product_id, label });
+    }
+    return [...map.values()].sort((a, b) => a.label.localeCompare(b.label));
+  }, [rows]);
+
+  useEffect(() => {
+    setSelectedMarketing((prev) =>
+      prev && !marketingOptions.some((o) => o.id === prev.id) ? null : prev
+    );
+  }, [marketingOptions]);
+
+  useEffect(() => {
+    setSelectedProduct((prev) =>
+      prev && !productOptions.some((o) => o.id === prev.id) ? null : prev
+    );
+  }, [productOptions]);
 
   const operatingLabel = useMemo(
     () => t("products.salePeriodStatusReport.breakdownOperating"),
     [t]
   );
+
+  const filteredRows = useMemo(() => {
+    return rows.filter((row) => {
+      if (selectedMarketing != null && row.marketing_user?.id !== selectedMarketing.id) return false;
+      if (selectedProduct != null && row.product_id !== selectedProduct.id) return false;
+      return true;
+    });
+  }, [rows, selectedMarketing, selectedProduct]);
 
   return (
     <Box sx={wrapperSx}>
@@ -221,6 +273,52 @@ const SalePeriodStatusReportPageComponent = () => {
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2, maxWidth: 720 }}>
         {t("products.salePeriodStatusReport.subtitle")}
       </Typography>
+
+      {!isLoading && !error && rows.length > 0 && (
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          sx={{ mb: 2 }}
+          useFlexGap
+        >
+          <Autocomplete<MarketingFilterOption>
+            size="small"
+            options={marketingOptions}
+            value={selectedMarketing}
+            onChange={(_, newValue) => setSelectedMarketing(newValue)}
+            getOptionLabel={(option) =>
+              typeof option === "object" && option ? `${option.name} (${option.email})` : ""
+            }
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            noOptionsText={t("products.salePeriodStatusReport.filterNoMatchingOptions")}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label={t("products.salePeriodStatusReport.filterMarketingLabel")}
+                placeholder={t("products.addSalePeriodPage.searchMarketingPlaceholder")}
+              />
+            )}
+            sx={reportFilterAutocompleteSx}
+          />
+          <Autocomplete<ProductFilterOption>
+            size="small"
+            options={productOptions}
+            value={selectedProduct}
+            onChange={(_, newValue) => setSelectedProduct(newValue)}
+            getOptionLabel={(option) => (typeof option === "object" && option ? option.label : "")}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            noOptionsText={t("products.salePeriodStatusReport.filterNoMatchingOptions")}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label={t("products.salePeriodStatusReport.filterProductLabel")}
+                placeholder={t("products.addSalePeriodPage.searchProductPlaceholder")}
+              />
+            )}
+            sx={reportFilterAutocompleteSx}
+          />
+        </Stack>
+      )}
 
       {error && (
         <Alert severity="error" sx={alertSx}>
@@ -238,12 +336,17 @@ const SalePeriodStatusReportPageComponent = () => {
         <Typography color="text.secondary">{t("products.salePeriodStatusReport.empty")}</Typography>
       )}
 
-      {!isLoading && rows.length > 0 && (
+      {!isLoading && !error && rows.length > 0 && filteredRows.length === 0 && (
+        <Typography color="text.secondary">{t("products.salePeriodStatusReport.filterNoResults")}</Typography>
+      )}
+
+      {!isLoading && filteredRows.length > 0 && (
         <TableContainer component={Paper} variant="outlined" sx={{ maxWidth: "100%" }}>
           <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
                 <TableCell>{t("products.salePeriodStatusReport.colProduct")}</TableCell>
+                <TableCell>{t("products.salePeriodStatusReport.colMarketing")}</TableCell>
                 <TableCell align="right">{t("products.salePeriodStatusReport.colPeriodDaysProgress")}</TableCell>
                 <TableCell align="right">{t("products.salePeriodStatusReport.colFormsVsOrders")}</TableCell>
                 <TableCell align="right">{t("products.salePeriodStatusReport.colRevenue")}</TableCell>
@@ -253,7 +356,7 @@ const SalePeriodStatusReportPageComponent = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.map((row) => {
+              {filteredRows.map((row) => {
                 const rowBg =
                   profitRowColors &&
                   profitPercentRowBackground(row.profit_to_revenue_percent, profitRowColors);
@@ -274,6 +377,7 @@ const SalePeriodStatusReportPageComponent = () => {
                     <TableCell>
                       <ProductNameCell row={row} />
                     </TableCell>
+                    <TableCell>{row.marketing_user?.name ?? "–"}</TableCell>
                     <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
                       {row.cost_entries_count} / {row.days_selling_until_now} / {row.period_days_total}
                     </TableCell>

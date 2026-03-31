@@ -19,7 +19,7 @@ class ProductSalePeriodStatusReportController extends Controller
 
         $periods = ProductSalePeriod::query()
             ->whereIn('product_id', $productIds)
-            ->with(['product:id,name,code'])
+            ->with(['product:id,name,code', 'marketingUser:id,name,email'])
             ->withSum('costEntries', 'ads_run_cost')
             ->withCount('costEntries')
             ->orderByDesc('start_at')
@@ -83,6 +83,7 @@ class ProductSalePeriodStatusReportController extends Controller
             'sale_period_id'             => $period->id,
             'product_id'                 => $period->product_id,
             'product'                    => $period->product,
+            'marketing_user'             => $period->marketingUser?->only(['id', 'name', 'email']),
             'purchase_cost'              => round($purchaseCost, 2),
             'selling_price'              => round($sellingPrice, 2),
             'fee_or_tax'                 => round($feeOrTaxRate, 2),
