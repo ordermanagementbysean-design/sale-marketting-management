@@ -8,7 +8,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
-import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
+// import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
@@ -26,7 +26,7 @@ const SALE_PERIOD_REPORT_PATHS = new Set([
 
 const allMenuItems = [
   { path: "/", labelKey: "layout.sidebar.overview", icon: <DashboardOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
-  { path: "/orders", labelKey: "layout.sidebar.orders", icon: <ShoppingCartOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
+  // { path: "/orders", labelKey: "layout.sidebar.orders", icon: <ShoppingCartOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
   { path: "/products", labelKey: "layout.sidebar.products", icon: <Inventory2OutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
   { path: "/products/sale-periods", labelKey: "layout.sidebar.salePeriodList", icon: <CalendarMonthOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
   { path: "/products/sale-periods/status-report", labelKey: "layout.sidebar.salePeriodStatusReport", icon: <AssessmentOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
