@@ -30,6 +30,7 @@ interface AuthState {
   isLoading: boolean;
   canManageUsers: boolean;
   canEditProducts: boolean;
+  canViewSalePeriodsAndReports: boolean;
 }
 
 interface AuthContextValue extends AuthState {
@@ -49,11 +50,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading: true,
     canManageUsers: false,
     canEditProducts: false,
+    canViewSalePeriodsAndReports: false,
   });
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     const res = await loginApi(credentials);
-    const { user, token, can_manage_users = false, can_edit_products = false } = res;
+    const {
+      user,
+      token,
+      can_manage_users = false,
+      can_edit_products = false,
+      can_view_sale_periods_and_reports = false,
+    } = res;
     storeToken(token);
     setAuthToken(token);
     setState({
@@ -62,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading: false,
       canManageUsers: can_manage_users,
       canEditProducts: can_edit_products,
+      canViewSalePeriodsAndReports: can_view_sale_periods_and_reports,
     });
     navigate("/", { replace: true });
   }, [navigate]);
@@ -78,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading: false,
         canManageUsers: false,
         canEditProducts: false,
+        canViewSalePeriodsAndReports: false,
       });
       navigate("/login", { replace: true });
     }
@@ -86,12 +96,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = useCallback(async () => {
     const token = getStoredToken();
     if (!token) return;
-    const { user, can_manage_users = false, can_edit_products = false } = await getMe();
+    const {
+      user,
+      can_manage_users = false,
+      can_edit_products = false,
+      can_view_sale_periods_and_reports = false,
+    } = await getMe();
     setState((s) => ({
       ...s,
       user,
       canManageUsers: can_manage_users,
       canEditProducts: can_edit_products,
+      canViewSalePeriodsAndReports: can_view_sale_periods_and_reports,
     }));
   }, []);
 
@@ -104,14 +120,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setAuthToken(token);
     getMe()
-      .then(({ user, can_manage_users = false, can_edit_products = false }) =>
-        setState({
+      .then(
+        ({
           user,
-          token,
-          isLoading: false,
-          canManageUsers: can_manage_users,
-          canEditProducts: can_edit_products,
-        })
+          can_manage_users = false,
+          can_edit_products = false,
+          can_view_sale_periods_and_reports = false,
+        }) =>
+          setState({
+            user,
+            token,
+            isLoading: false,
+            canManageUsers: can_manage_users,
+            canEditProducts: can_edit_products,
+            canViewSalePeriodsAndReports: can_view_sale_periods_and_reports,
+          })
       )
       .catch(() => {
         storeToken(null);
@@ -122,6 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isLoading: false,
           canManageUsers: false,
           canEditProducts: false,
+          canViewSalePeriodsAndReports: false,
         });
       });
   }, []);

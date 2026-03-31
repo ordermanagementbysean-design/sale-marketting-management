@@ -2,6 +2,7 @@ import { memo } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/features/auth/context/AuthContext";
 import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
+import { RequireSalePeriodReportsRoute } from "@/features/auth/components/RequireSalePeriodReportsRoute";
 import LoginPage from "@/features/auth/pages/LoginPage";
 import AdminLayout from "@/shared/layouts/AdminLayout";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage";
@@ -12,6 +13,7 @@ import AddSalePeriodPage from "@/features/products/pages/AddSalePeriodPage";
 import SalePeriodListPage from "@/features/products/pages/SalePeriodListPage";
 import SalePeriodStatusReportPage from "@/features/products/pages/SalePeriodStatusReportPage";
 import SalePeriodImportPage from "@/features/products/pages/SalePeriodImportPage";
+import ProductImportPage from "@/features/products/pages/ProductImportPage";
 import SalePeriodStatusReportProfitColorsPage from "@/features/products/pages/SalePeriodStatusReportProfitColorsPage";
 import ChangePasswordPage from "@/features/users/pages/ChangePasswordPage";
 import ProfilePage from "@/features/users/pages/ProfilePage";
@@ -36,15 +38,38 @@ const App = memo(function App() {
             <Route path="orders" element={<OrderPage />} />
             <Route path="products" element={<ProductPage />} />
             <Route path="products/new" element={<CreateProductPage />} />
-            <Route path="products/sale-periods" element={<SalePeriodListPage />} />
-            <Route path="products/sale-periods/import" element={<SalePeriodImportPage />} />
+            <Route path="products/import" element={<ProductImportPage />} />
+            <Route
+              path="products/sale-periods"
+              element={
+                <RequireSalePeriodReportsRoute>
+                  <SalePeriodListPage />
+                </RequireSalePeriodReportsRoute>
+              }
+            />
+            <Route
+              path="products/sale-periods/import"
+              element={
+                <RequireSalePeriodReportsRoute>
+                  <SalePeriodImportPage />
+                </RequireSalePeriodReportsRoute>
+              }
+            />
             <Route
               path="products/sale-periods/status-report/profit-colors"
-              element={<SalePeriodStatusReportProfitColorsPage />}
+              element={
+                <RequireSalePeriodReportsRoute>
+                  <SalePeriodStatusReportProfitColorsPage />
+                </RequireSalePeriodReportsRoute>
+              }
             />
             <Route
               path="products/sale-periods/status-report"
-              element={<SalePeriodStatusReportPage />}
+              element={
+                <RequireSalePeriodReportsRoute>
+                  <SalePeriodStatusReportPage />
+                </RequireSalePeriodReportsRoute>
+              }
             />
             <Route path="products/add-sale-period" element={<AddSalePeriodPage />} />
             {/* <Route path="ai-page-builder" element={<AIPageBuilderPage />} /> */}

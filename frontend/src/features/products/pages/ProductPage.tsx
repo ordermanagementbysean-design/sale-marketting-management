@@ -26,6 +26,7 @@ import type { SxProps, Theme } from "@mui/material/styles";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import { Link as RouterLink } from "react-router-dom";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { isYmdBeforeLocalToday } from "@/shared/utils/localDateYmd";
@@ -676,15 +677,26 @@ const ProductPageComponent = () => {
           </Select>
         </FormControl>
         {canEditProducts && (
-          <Button
-            variant="contained"
-            size="small"
-            component={RouterLink}
-            to="/products/new"
-            startIcon={<AddIcon />}
-          >
-            {t("products.addProduct")}
-          </Button>
+          <>
+            <Button
+              variant="outlined"
+              size="small"
+              component={RouterLink}
+              to="/products/import"
+              startIcon={<UploadFileOutlinedIcon />}
+            >
+              {t("layout.sidebar.productImport")}
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              component={RouterLink}
+              to="/products/new"
+              startIcon={<AddIcon />}
+            >
+              {t("products.addProduct")}
+            </Button>
+          </>
         )}
         <Button
           variant="outlined"

@@ -226,6 +226,38 @@ export interface SalePeriodImportResponse {
   row_errors: SalePeriodImportRowError[];
 }
 
+/** One row for POST /api/products/import */
+export interface ProductImportApiRow {
+  name: string;
+  code: string;
+  status: 0 | 1;
+  unit: string;
+  purchase_price: number;
+  unit_price: number;
+  vat_percent: number;
+  vat_code: string | null;
+  weight_gram: number;
+}
+
+export interface ProductImportQueuedResponse {
+  import_id: string;
+  status: "queued";
+  message: string;
+}
+
+export interface ProductImportRowError {
+  row: number;
+  messages: string[];
+}
+
+/** GET /api/products/import/{importId} */
+export interface ProductImportStatusResponse {
+  status: "queued" | "processing" | "completed" | "failed";
+  created?: number;
+  row_errors?: ProductImportRowError[];
+  message?: string;
+}
+
 export interface CreateProductSalePeriodPayload {
   start_at: string;
   end_at: string;

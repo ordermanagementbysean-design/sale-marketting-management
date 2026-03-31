@@ -20,8 +20,9 @@ import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import type { SxProps, Theme } from "@mui/material/styles";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
+import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import RequestQuoteIcon from "@mui/icons-material/RequestQuote";
@@ -558,14 +559,25 @@ const SalePeriodListPageComponent = () => {
       <Box sx={toolbarSx}>
         <Box sx={{ flex: 1 }} />
         {canEditProducts && (
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<AddIcon />}
-            onClick={goToAdd}
-          >
-            {t("products.salePeriodList.addSalePeriod")}
-          </Button>
+          <>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={goToAdd}
+            >
+              {t("products.salePeriodList.addSalePeriod")}
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              component={RouterLink}
+              to="/products/sale-periods/import"
+              startIcon={<UploadFileOutlinedIcon />}
+            >
+              {t("layout.sidebar.salePeriodImport")}
+            </Button>
+          </>
         )}
       </Box>
 

@@ -45,6 +45,16 @@ enum UserRole: string
         ];
     }
 
+    public static function canViewSalePeriodsAndReports(): array
+    {
+        return [
+            self::ADMIN->value,
+            self::DIRECTOR->value,
+            self::MANAGER->value,
+            self::ACCOUNTING->value,
+        ];
+    }
+
     /** Whether this role is subject to product visibility (can view only allowed products). */
     public static function hasProductVisibility(string $role): bool
     {

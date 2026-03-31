@@ -51,6 +51,18 @@ class User extends Authenticatable
     }
 
     /**
+     * Sale period list, status report, and related screens (admin, director, manager, accounting).
+     */
+    public function canViewSalePeriodsAndReports(): bool
+    {
+        $role = $this->role instanceof UserRoleEnum
+            ? $this->role->value
+            : (string) $this->role;
+
+        return in_array($role, UserRoleEnum::canViewSalePeriodsAndReports(), true);
+    }
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>

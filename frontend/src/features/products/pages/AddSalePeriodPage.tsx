@@ -35,7 +35,7 @@ const sectionSx: SxProps<Theme> = { mt: 3, mb: 2 };
 const AddSalePeriodPageComponent = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { canEditProducts } = useAuth();
+  const { canEditProducts, canViewSalePeriodsAndReports } = useAuth();
 
   const [productOpen, setProductOpen] = useState(false);
   const [productInputValue, setProductInputValue] = useState("");
@@ -125,10 +125,11 @@ const AddSalePeriodPageComponent = () => {
             setSubmitError(msg ?? t("products.salePeriodOverlapError"));
           },
           onSuccess: (period) => {
-            const goList = () => navigate("/products/sale-periods");
+            const goAfterSuccess = () =>
+              navigate(canViewSalePeriodsAndReports ? "/products/sale-periods" : "/products");
             const maybeCostThenList = () => {
               if (shouldSkipCostEntryAdsOnly(costForm)) {
-                goList();
+                goAfterSuccess();
                 return;
               }
               const costPayload = buildAdsOnlyCostEntryPayload(costForm.ads);
@@ -143,7 +144,7 @@ const AddSalePeriodPageComponent = () => {
                   payload: costPayload,
                 },
                 {
-                  onSuccess: goList,
+                  onSuccess: goAfterSuccess,
                   onError: () => {
                     setSubmitError(t("products.addSalePeriodPage.costEntryCreateError"));
                   },
@@ -171,6 +172,7 @@ const AddSalePeriodPageComponent = () => {
       createPeriodMutation,
       createCostEntryMutation,
       navigate,
+      canViewSalePeriodsAndReports,
       t,
     ]
   );

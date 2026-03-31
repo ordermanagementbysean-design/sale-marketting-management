@@ -13,6 +13,10 @@ class ProductSalePeriodStatusReportController extends Controller
 {
     public function __invoke(Request $request): JsonResponse
     {
+        if (! $request->user()->canViewSalePeriodsAndReports()) {
+            abort(403, 'You do not have permission to view the sale period status report.');
+        }
+
         $productIds = Product::query()
             ->visibleToUser($request->user())
             ->pluck('id');

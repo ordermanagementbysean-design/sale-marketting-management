@@ -10,6 +10,9 @@ import type {
   ProductSalePeriodCostEntry,
   ProductVisibilityPayload,
   ProductWithLogs,
+  ProductImportApiRow,
+  ProductImportQueuedResponse,
+  ProductImportStatusResponse,
   SalePeriodImportApiRow,
   SalePeriodImportResponse,
   SalePeriodListItem,
@@ -87,6 +90,20 @@ export async function getSalePeriodsList(): Promise<SalePeriodListItem[]> {
 
 export async function importSalePeriods(rows: SalePeriodImportApiRow[]): Promise<SalePeriodImportResponse> {
   const { data } = await axiosClient.post<SalePeriodImportResponse>("/api/sale-periods/import", { rows });
+  return data;
+}
+
+export async function queueProductImport(
+  rows: ProductImportApiRow[]
+): Promise<ProductImportQueuedResponse> {
+  const { data } = await axiosClient.post<ProductImportQueuedResponse>("/api/products/import", { rows });
+  return data;
+}
+
+export async function getProductImportStatus(importId: string): Promise<ProductImportStatusResponse> {
+  const { data } = await axiosClient.get<ProductImportStatusResponse>(
+    `/api/products/import/${importId}`
+  );
   return data;
 }
 

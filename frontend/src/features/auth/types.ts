@@ -19,10 +19,12 @@ export interface LoginResponse {
   token_type: string;
   can_manage_users?: boolean;
   can_edit_products?: boolean;
+  can_view_sale_periods_and_reports?: boolean;
 }
 
 export interface MeResponse {
   user: User;
   can_manage_users?: boolean;
   can_edit_products?: boolean;
+  can_view_sale_periods_and_reports?: boolean;
 }

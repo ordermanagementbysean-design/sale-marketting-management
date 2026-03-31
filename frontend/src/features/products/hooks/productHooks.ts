@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   useMutation,
   useQuery,
@@ -20,6 +21,8 @@ import {
   getSalePeriodsList,
   getSalePeriodsStatusReport,
   importSalePeriods,
+  queueProductImport,
+  getProductImportStatus,
   getProfitRowColorSettings,
   resetProfitRowColorSettings,
   updateProfitRowColorSettings,
@@ -35,6 +38,7 @@ import type {
   CreateProductPayload,
   ProductFilters,
   ProductVisibilityPayload,
+  ProductImportApiRow,
   SalePeriodImportApiRow,
   UpdateProductAdLinkPayload,
   UpdateProductPayload,
@@ -152,6 +156,38 @@ export function useImportSalePeriods() {
       queryClient.invalidateQueries({ queryKey: [...productsQueryKey, "sale-periods-status-report"] });
     },
   });
+}
+
+export function useQueueProductImport() {
+  return useMutation({
+    mutationFn: (rows: ProductImportApiRow[]) => queueProductImport(rows),
+  });
+}
+
+export function useProductImportStatus(importId: string | null) {
+  const queryClient = useQueryClient();
+  const enabled = importId != null;
+  const query = useQuery({
+    queryKey: [...productsQueryKey, "product-import-status", importId],
+    queryFn: () => getProductImportStatus(importId!),
+    enabled,
+    refetchInterval: (q) => {
+      const s = q.state.data?.status;
+      if (s === "queued" || s === "processing") {
+        return 1500;
+      }
+      return false;
+    },
+  });
+
+  useEffect(() => {
+    const s = query.data?.status;
+    if (s === "completed" || s === "failed") {
+      queryClient.invalidateQueries({ queryKey: productsQueryKey });
+    }
+  }, [query.data?.status, queryClient]);
+
+  return query;
 }
 
 export function useProfitRowColorSettings() {

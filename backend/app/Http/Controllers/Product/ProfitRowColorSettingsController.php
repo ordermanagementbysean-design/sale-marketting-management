@@ -42,6 +42,10 @@ class ProfitRowColorSettingsController extends Controller
 
     public function show(Request $request): JsonResponse
     {
+        if (! $request->user()->canViewSalePeriodsAndReports()) {
+            abort(403, 'You do not have permission to view these settings.');
+        }
+
         $row = AppSetting::query()->where('key', self::KEY)->first();
 
         return response()->json($this->mergedPayload($row?->value));

@@ -18,6 +18,10 @@ class ProductSalePeriodController extends Controller
      */
     public function listAll(Request $request): JsonResponse
     {
+        if (! $request->user()->canViewSalePeriodsAndReports()) {
+            abort(403, 'You do not have permission to view the sale periods list.');
+        }
+
         $productIds = Product::query()
             ->visibleToUser($request->user())
             ->pluck('id');
