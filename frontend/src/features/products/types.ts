@@ -168,9 +168,19 @@ export interface UpdateProductPayload {
   status?: 0 | 1;
 }
 
+/** Mirrors `UserRole::productViewerRoles()` — keep in sync with backend. */
+export const PRODUCT_VIEWER_ROLE_VALUES = [
+  "marketing",
+  "telesale",
+  "telesale_leader",
+  "customer_service",
+] as const;
+
+export type ProductViewerRoleValue = (typeof PRODUCT_VIEWER_ROLE_VALUES)[number];
+
 export interface CreateProductPayload {
   name: string;
-  code: string;
+  code?: string;
   unit?: string;
   purchase_price?: number;
   unit_price?: number;
@@ -178,6 +188,10 @@ export interface CreateProductPayload {
   vat_code?: string | null;
   weight_gram?: number;
   status?: 0 | 1;
+  /** Default true: every viewer role can see the product (department-wide). */
+  visibility_allow_all?: boolean;
+  /** When `visibility_allow_all` is false, at least one role is required. */
+  visibility_roles?: string[];
 }
 
 export interface CreateProductAdLinkPayload {

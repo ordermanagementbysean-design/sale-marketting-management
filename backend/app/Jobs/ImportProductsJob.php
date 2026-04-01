@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\UserRole;
 use App\Models\Product;
 use App\Models\ProductVisibility;
+use App\Services\ProductCodeGenerator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -49,9 +50,11 @@ class ImportProductsJob implements ShouldQueue
                 $messages[] = 'name must be less than 255 characters.';
             }
 
-            if ($code === '') {
-                $messages[] = 'code is required.';
-            } elseif (mb_strlen($code) > 200) {
+            if (empty($code)) {
+                $code = app(ProductCodeGenerator::class)->generateProductCode($name);
+            }
+
+            if (mb_strlen($code) > 200) {
                 $messages[] = 'code must be less than 200 characters.';
             }
 

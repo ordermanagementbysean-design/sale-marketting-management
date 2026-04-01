@@ -17,7 +17,10 @@ import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import TableContainer from "@mui/material/TableContainer";
+import CircularProgress from "@mui/material/CircularProgress";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import Autocomplete from "@mui/material/Autocomplete";
 import IconButton from "@mui/material/IconButton";
@@ -27,6 +30,8 @@ import type { SxProps, Theme } from "@mui/material/styles";
 import { DataGrid, GridColDef, GridRowId, GridRowSelectionModel } from "@mui/x-data-grid";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import { Link as RouterLink } from "react-router-dom";
 import { useAuth } from "@/features/auth/context/AuthContext";
@@ -34,20 +39,17 @@ import { isYmdBeforeLocalToday } from "@/shared/utils/localDateYmd";
 import { useMarketingUsersAll } from "@/features/users/hooks/userHooks";
 import type { UserWithRoles } from "@/features/users/types";
 import {
-  useCreateProductAdLink,
   useCreateProductSalePeriod,
   useDeleteProduct,
-  useDeleteProductAdLink,
   useDeleteProductSalePeriod,
   useProduct,
   useProductEligibleUsers,
   useProducts,
   useUpdateProduct,
-  useUpdateProductAdLink,
   useUpdateProductSalePeriod,
   useUpdateProductVisibility,
 } from "../hooks/productHooks";
-import type { Product, ProductAdLink, ProductSalePeriod, ProductWithLogs } from "../types";
+import type { Product, ProductSalePeriod, ProductWithLogs } from "../types";
 import { DEFAULT_SALE_PERIOD_OPERATING_COST } from "../utils/salePeriodCostForm";
 
 const VISIBILITY_DEPARTMENTS = ["marketing", "sale", "customer_service"] as const;
@@ -95,21 +97,53 @@ const dataGridSx: SxProps<Theme> = {
   border: "none",
   "& .MuiDataGrid-cell:focus": { outline: "none" },
   "& .MuiDataGrid-columnHeaders": { bgcolor: "grey.100", borderRadius: 1 },
+  "& .MuiDataGrid-cell[data-field=\"actions\"]": {
+    display: "flex",
+    alignItems: "center",
+    py: 0,
+  },
 };
-const dialogFieldSx: SxProps<Theme> = { mb: 2 };
-const logBlockSx: SxProps<Theme> = {
-  mt: 2,
-  p: 1.5,
-  bgcolor: "grey.100",
+
+/** Row action icons: no visible border until hover. */
+const rowActionIconSx: SxProps<Theme> = {
+  border: "1px solid transparent",
   borderRadius: 1,
-  maxHeight: 200,
-  overflow: "auto",
+  boxSizing: "border-box",
+  "&:hover": {
+    borderColor: "primary.main",
+    bgcolor: "action.hover",
+  },
 };
+
+const dialogFieldSx: SxProps<Theme> = { mb: 2 };
 
 const statusLabels: Record<number, string> = {
   0: "products.statusDisabled",
   1: "products.statusActive",
 };
+
+function getApiErrorMessage(err: unknown, fallback: string): string {
+  if (err && typeof err === "object" && "response" in err) {
+    const data = (err as { response?: { data?: unknown } }).response?.data;
+    if (data && typeof data === "object") {
+      const d = data as { message?: unknown; errors?: Record<string, string[] | string> };
+      if (typeof d.message === "string" && d.message.trim()) {
+        return d.message;
+      }
+      if (d.errors && typeof d.errors === "object") {
+        const vals = Object.values(d.errors).flatMap((v) => (Array.isArray(v) ? v : [v]));
+        const first = vals.find((x): x is string => typeof x === "string" && x.trim().length > 0);
+        if (first) {
+          return first;
+        }
+      }
+    }
+  }
+  if (err instanceof Error && err.message) {
+    return err.message;
+  }
+  return fallback;
+}
 
 function formatChangeKey(key: string): string {
   const map: Record<string, string> = {
@@ -122,8 +156,41 @@ function formatChangeKey(key: string): string {
     vat_code: "products.fields.vatCode",
     weight_gram: "products.fields.weightGram",
     status: "products.fields.status",
+    allowed_users: "products.editLog.allowedUsers",
+    visibility_roles: "products.editLog.visibilityRoles",
   };
   return map[key] ?? key;
+}
+
+function formatChangeValueForLog(value: unknown, t?: (key: string) => string): string {
+  if (value === null || value === undefined) {
+    return "—";
+  }
+  if (Array.isArray(value)) {
+    return value.length === 0 ? "—" : value.join(", ");
+  }
+  if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+    const o = value as Record<string, unknown>;
+    const keys = Object.keys(o);
+    if (keys.length === 0) {
+      return "—";
+    }
+    const looksLikeRoleAllowAll = keys.every((k) => typeof o[k] === "boolean");
+    if (looksLikeRoleAllowAll && t) {
+      return [...keys]
+        .sort()
+        .map((role) => {
+          const allow = o[role] === true;
+          return `${role}: ${allow ? t("products.editLog.visibilityRoleAll") : t("products.editLog.visibilityRoleRestricted")}`;
+        })
+        .join("; ");
+    }
+    return keys
+      .sort()
+      .map((k) => `${k}: ${String(o[k])}`)
+      .join("; ");
+  }
+  return String(value);
 }
 
 const ProductPageComponent = () => {
@@ -136,6 +203,10 @@ const ProductPageComponent = () => {
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [visibilityDialogOpen, setVisibilityDialogOpen] = useState(false);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [historyProductId, setHistoryProductId] = useState<number | null>(null);
+  const [historyProductName, setHistoryProductName] = useState("");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
   const [bulkDeleteToast, setBulkDeleteToast] = useState<{
@@ -147,6 +218,11 @@ const ProductPageComponent = () => {
     severity: "success",
     message: "",
   });
+  const [pageNotice, setPageNotice] = useState<{
+    open: boolean;
+    severity: "success" | "error";
+    message: string;
+  }>({ open: false, severity: "success", message: "" });
 
   const filters = useMemo(
     () => ({
@@ -164,14 +240,16 @@ const ProductPageComponent = () => {
 
   const { data: productsData, isLoading, error, refetch } = useProducts(filters);
   const productId = editingProduct?.id ?? null;
-  const { data: productDetail, isLoading: loadingDetail } = useProduct(productId);
+  const { data: productDetail } = useProduct(productId);
+  const historyQueryId = historyDialogOpen ? historyProductId : null;
+  const { data: historyProductDetail, isLoading: historyDetailLoading } =
+    useProduct(historyQueryId);
   const updateProductMutation = useUpdateProduct();
   const deleteProductMutation = useDeleteProduct();
-  const { data: eligibleUsers = [] } = useProductEligibleUsers(canEditProducts && dialogOpen);
+  const { data: eligibleUsers = [] } = useProductEligibleUsers(
+    canEditProducts && (dialogOpen || visibilityDialogOpen)
+  );
   const updateVisibilityMutation = useUpdateProductVisibility();
-  const createAdLinkMutation = useCreateProductAdLink();
-  const updateAdLinkMutation = useUpdateProductAdLink();
-  const deleteAdLinkMutation = useDeleteProductAdLink();
   const createPeriodMutation = useCreateProductSalePeriod();
   const updatePeriodMutation = useUpdateProductSalePeriod();
   const deletePeriodMutation = useDeleteProductSalePeriod();
@@ -230,16 +308,9 @@ const ProductPageComponent = () => {
   const periodStartLocked =
     editingPeriod != null && isYmdBeforeLocalToday(editingPeriod.start_at.slice(0, 10));
 
-  const [adLinkDialogOpen, setAdLinkDialogOpen] = useState(false);
-  const [adLinkSalePeriodId, setAdLinkSalePeriodId] = useState<number | "">("");
-  const [editingAdLink, setEditingAdLink] = useState<ProductAdLink | null>(null);
-  const [adLinkName, setAdLinkName] = useState("");
-  const [adLinkUrl, setAdLinkUrl] = useState("");
-  const [adLinkIdentifier, setAdLinkIdentifier] = useState("");
-  const [adLinkClicks, setAdLinkClicks] = useState("");
-  const [adLinkCost, setAdLinkCost] = useState("");
-
   const openEdit = useCallback((product: Product) => {
+    setVisibilityDialogOpen(false);
+    setHistoryDialogOpen(false);
     setEditingProduct(product);
     setFormName(product.name);
     setFormCode(product.code);
@@ -260,7 +331,49 @@ const ProductPageComponent = () => {
 
   const closeDialog = useCallback(() => {
     setDialogOpen(false);
+    setVisibilityDialogOpen(false);
     setEditingProduct(null);
+  }, []);
+
+  const openHistoryForRow = useCallback((product: Product) => {
+    setHistoryProductId(product.id);
+    setHistoryProductName(product.name);
+    setHistoryDialogOpen(true);
+  }, []);
+
+  const closeHistoryDialog = useCallback(() => {
+    setHistoryDialogOpen(false);
+    setHistoryProductId(null);
+    setHistoryProductName("");
+  }, []);
+
+  const handleClosePageNotice = useCallback(
+    (_?: unknown, reason?: string) => {
+      if (reason === "clickaway") {
+        return;
+      }
+      setPageNotice((n) => ({ ...n, open: false }));
+    },
+    []
+  );
+
+  const closeVisibilityDialog = useCallback(() => {
+    setVisibilityDialogOpen(false);
+    if (!dialogOpen) {
+      setEditingProduct(null);
+    }
+  }, [dialogOpen]);
+
+  const openProductVisibilityForRow = useCallback((product: Product) => {
+    setDialogOpen(false);
+    setHistoryDialogOpen(false);
+    setEditingProduct(product);
+    setVisibilitySelection({
+      marketing: [],
+      sale: [],
+      customer_service: [],
+    });
+    setVisibilityDialogOpen(true);
   }, []);
 
   useEffect(() => {
@@ -315,7 +428,25 @@ const ProductPageComponent = () => {
     }
     updateVisibilityMutation.mutate(
       { id: editingProduct.id, visibility },
-      { onSuccess: () => refetch() }
+      {
+        onSuccess: () => {
+          refetch();
+          closeVisibilityDialog();
+          setPageNotice({
+            open: true,
+            severity: "success",
+            message: t("products.viewPermissionSaved"),
+          });
+        },
+        onError: (err: unknown) => {
+          closeVisibilityDialog();
+          setPageNotice({
+            open: true,
+            severity: "error",
+            message: getApiErrorMessage(err, t("products.viewPermissionSaveError")),
+          });
+        },
+      }
     );
   }, [
     editingProduct,
@@ -323,94 +454,13 @@ const ProductPageComponent = () => {
     visibilitySelection,
     updateVisibilityMutation,
     refetch,
+    t,
+    closeVisibilityDialog,
   ]);
 
   const salePeriods = useMemo(
     () => (productDetail as ProductWithLogs)?.sale_periods ?? [],
     [productDetail]
-  );
-
-  const openAdLinkForm = useCallback(
-    (adLink?: ProductAdLink | null) => {
-      setEditingAdLink(adLink ?? null);
-      setAdLinkName(adLink?.name ?? "");
-      setAdLinkUrl(adLink?.ad_url ?? "");
-      setAdLinkIdentifier(adLink?.ad_identifier ?? "");
-      setAdLinkClicks(String(adLink?.clicks ?? 0));
-      setAdLinkCost(String(adLink?.ad_cost ?? 0));
-      setAdLinkSalePeriodId(
-        adLink?.product_sale_period_id ?? (salePeriods[0]?.id ?? "")
-      );
-      setAdLinkDialogOpen(true);
-    },
-    [salePeriods]
-  );
-  const closeAdLinkDialog = useCallback(() => {
-    setAdLinkDialogOpen(false);
-    setEditingAdLink(null);
-  }, []);
-  const handleSaveAdLink = useCallback(() => {
-    if (!editingProduct) return;
-    const clicks = Number(adLinkClicks) || 0;
-    const adCost = Number(adLinkCost) || 0;
-    if (editingAdLink) {
-      updateAdLinkMutation.mutate(
-        {
-          productId: editingProduct.id,
-          adLinkId: editingAdLink.id,
-          payload: {
-            ...(adLinkSalePeriodId !== "" && Number(adLinkSalePeriodId) !== editingAdLink.product_sale_period_id
-              ? { product_sale_period_id: Number(adLinkSalePeriodId) }
-              : {}),
-            name: adLinkName.trim(),
-            ad_url: adLinkUrl.trim() || null,
-            ad_identifier: adLinkIdentifier.trim() || null,
-            clicks,
-            ad_cost: adCost,
-          },
-        },
-        { onSuccess: closeAdLinkDialog }
-      );
-    } else {
-      if (typeof adLinkSalePeriodId !== "number") return;
-      createAdLinkMutation.mutate(
-        {
-          productId: editingProduct.id,
-          payload: {
-            product_sale_period_id: Number(adLinkSalePeriodId),
-            name: adLinkName.trim(),
-            ad_url: adLinkUrl.trim() || null,
-            ad_identifier: adLinkIdentifier.trim() || null,
-            clicks,
-            ad_cost: adCost,
-          },
-        },
-        { onSuccess: closeAdLinkDialog }
-      );
-    }
-  }, [
-    editingProduct,
-    editingAdLink,
-    adLinkSalePeriodId,
-    adLinkName,
-    adLinkUrl,
-    adLinkIdentifier,
-    adLinkClicks,
-    adLinkCost,
-    createAdLinkMutation,
-    updateAdLinkMutation,
-    closeAdLinkDialog,
-  ]);
-  const handleDeleteAdLink = useCallback(
-    (adLink: ProductAdLink) => {
-      if (!editingProduct || !window.confirm(t("products.adLinkDeleteConfirm")))
-        return;
-      deleteAdLinkMutation.mutate({
-        productId: editingProduct.id,
-        adLinkId: adLink.id,
-      });
-    },
-    [editingProduct, deleteAdLinkMutation, t]
   );
 
   const handleSubmit = useCallback(() => {
@@ -428,7 +478,25 @@ const ProductPageComponent = () => {
     };
     updateProductMutation.mutate(
       { id: editingProduct.id, payload },
-      { onSuccess: closeDialog }
+      {
+        onSuccess: () => {
+          refetch();
+          closeDialog();
+          setPageNotice({
+            open: true,
+            severity: "success",
+            message: t("products.productInfoSaved"),
+          });
+        },
+        onError: (err: unknown) => {
+          closeDialog();
+          setPageNotice({
+            open: true,
+            severity: "error",
+            message: getApiErrorMessage(err, t("products.productUpdateError")),
+          });
+        },
+      }
     );
   }, [
     editingProduct,
@@ -443,6 +511,8 @@ const ProductPageComponent = () => {
     formWeightGram,
     formStatus,
     updateProductMutation,
+    refetch,
+    t,
     closeDialog,
   ]);
 
@@ -642,11 +712,34 @@ const ProductPageComponent = () => {
     [editingProduct, deletePeriodMutation, t]
   );
 
-  const getPeriodLabel = useCallback((periodId: number | null) => {
-    if (periodId == null) return "–";
-    const p = salePeriods.find((sp) => sp.id === periodId);
-    return p ? `${p.start_at.slice(0, 10)} – ${p.end_at.slice(0, 10)}` : "–";
-  }, [salePeriods]);
+  const historyTableRows = useMemo(() => {
+    const logs = (historyProductDetail as ProductWithLogs | undefined)?.edit_logs ?? [];
+    const out: {
+      rowKey: string;
+      time: string;
+      userName: string;
+      change: string;
+      oldVal: string;
+      newVal: string;
+    }[] = [];
+    for (const log of logs) {
+      const time = new Date(log.created_at).toLocaleString();
+      const userName = log.user?.name ?? String(log.user_id ?? "—");
+      const changes = log.changes ?? {};
+      for (const [key, val] of Object.entries(changes)) {
+        const v = val as { old?: unknown; new?: unknown };
+        out.push({
+          rowKey: `${log.id}-${key}`,
+          time,
+          userName,
+          change: t(formatChangeKey(key)),
+          oldVal: formatChangeValueForLog(v.old, t),
+          newVal: formatChangeValueForLog(v.new, t),
+        });
+      }
+    }
+    return out;
+  }, [historyProductDetail, t]);
 
   const columns = useMemo<GridColDef<Product>[]>(
     () => [
@@ -690,29 +783,70 @@ const ProductPageComponent = () => {
         ? [
             {
               field: "actions",
-              headerName: "",
-              width: 100,
+              headerName: t("products.actionsColumn"),
+              width: 152,
               sortable: false,
               renderCell: ({ row }: { row: Product }) => (
-                <Button
-                  size="small"
-                  startIcon={<EditOutlinedIcon />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openEdit(row);
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.25,
+                    height: "100%",
+                    width: "100%",
+                    minHeight: 0,
                   }}
                 >
-                  {t("products.edit")}
-                </Button>
+                  <Tooltip title={t("products.edit")}>
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      aria-label={t("products.edit")}
+                      sx={rowActionIconSx}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEdit(row);
+                      }}
+                    >
+                      <EditOutlinedIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title={t("products.rowVisibility")}>
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      aria-label={t("products.rowVisibility")}
+                      sx={rowActionIconSx}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openProductVisibilityForRow(row);
+                      }}
+                    >
+                      <VisibilityOutlinedIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title={t("products.rowHistory")}>
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      aria-label={t("products.rowHistory")}
+                      sx={rowActionIconSx}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openHistoryForRow(row);
+                      }}
+                    >
+                      <HistoryOutlinedIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
               ),
             } as GridColDef<Product>,
           ]
         : []),
     ],
-    [t, canEditProducts, openEdit]
+    [t, canEditProducts, openEdit, openProductVisibilityForRow, openHistoryForRow]
   );
-
-  const editLogs = (productDetail as ProductWithLogs)?.edit_logs ?? [];
 
   return (
     <Box sx={wrapperSx}>
@@ -892,6 +1026,11 @@ const ProductPageComponent = () => {
               <MenuItem value={1}>{t("products.statusActive")}</MenuItem>
             </Select>
           </FormControl>
+          {canEditProducts && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+              {t("products.editDialogProductFieldsHint")}
+            </Typography>
+          )}
           <Typography variant="subtitle2" sx={{ mt: 2, mb: 0.5 }}>
             {t("products.salePeriodsTitle")}
           </Typography>
@@ -978,22 +1117,144 @@ const ProductPageComponent = () => {
               </Button>
             )}
           </Box>
+        </DialogContent>
+        <DialogActions sx={{ flexWrap: "wrap", gap: 1 }}>
+          <Button onClick={closeDialog}>{t("users.cancel")}</Button>
+          {canEditProducts && (
+            <Button
+              type="button"
+              variant="contained"
+              onClick={handleSubmit}
+              disabled={updateProductMutation.isPending}
+            >
+              {updateProductMutation.isPending
+                ? t("users.saving")
+                : t("products.saveProductInfo")}
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
 
+      <Dialog
+        open={historyDialogOpen}
+        onClose={closeHistoryDialog}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>
+          {t("products.historyDialogTitle", {
+            name: (historyProductDetail?.name ?? historyProductName).trim() || "—",
+          })}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <TableContainer sx={{ maxHeight: 480 }}>
+            <Table size="small" stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>{t("products.historyTableTime")}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{t("products.historyTableUser")}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{t("products.historyTableChange")}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{t("products.historyTableOld")}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{t("products.historyTableNew")}</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {historyDetailLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                      <CircularProgress size={28} />
+                    </TableCell>
+                  </TableRow>
+                ) : historyTableRows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5}>
+                      <Typography variant="body2" color="text.secondary">
+                        {t("products.noEditLogs")}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  historyTableRows.map((r) => (
+                    <TableRow key={r.rowKey}>
+                      <TableCell sx={{ whiteSpace: "nowrap", verticalAlign: "top" }}>{r.time}</TableCell>
+                      <TableCell sx={{ verticalAlign: "top" }}>{r.userName}</TableCell>
+                      <TableCell
+                        sx={{
+                          verticalAlign: "top",
+                          maxWidth: 220,
+                          whiteSpace: "normal",
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        {r.change}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          verticalAlign: "top",
+                          maxWidth: 360,
+                          whiteSpace: "normal",
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        {r.oldVal}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          verticalAlign: "top",
+                          maxWidth: 360,
+                          whiteSpace: "normal",
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        {r.newVal}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeHistoryDialog}>{t("products.historyDialogClose")}</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={visibilityDialogOpen}
+        onClose={closeVisibilityDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          {t("products.productVisibilityDialogTitle", {
+            name: (editingProduct?.name ?? formName.trim()) || "—",
+          })}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, mt: 0.5 }}>
+            {t("products.productVisibilityDialogSubtitle")}
+          </Typography>
           {canEditProducts && (
             <>
-              <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
                 {t("products.visibilityTitle")}
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                 {t("products.visibilityDesc")}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+                {t("products.editDialogVisibilityHint")}
               </Typography>
               {VISIBILITY_DEPARTMENTS.map((dept) => {
                 const allOption: VisibilityOption = createAllOption(
                   t("products.visibilityAllStaff")
                 );
-                const deptUsers: VisibilityOption[] = usersByDept[dept].map(
-                  (u) => ({ id: u.id, name: u.name, email: u.email })
-                );
+                const deptUsers: VisibilityOption[] = usersByDept[dept].map((u) => ({
+                  id: u.id,
+                  name: u.name,
+                  email: u.email,
+                }));
                 const options: VisibilityOption[] = [allOption, ...deptUsers];
                 const value = visibilitySelection[dept];
                 return (
@@ -1042,159 +1303,25 @@ const ProductPageComponent = () => {
                     )}
                   />
                 );
-              }              )}
+              })}
             </>
-          )}
-
-          <Typography variant="subtitle2" sx={{ mt: 2, mb: 0.5 }}>
-            {t("products.adLinksTitle")}
-          </Typography>
-          <Box sx={{ overflowX: "auto", mb: 2 }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>{t("products.adLinks.name")}</TableCell>
-                  <TableCell>{t("products.adLinks.salePeriod")}</TableCell>
-                  <TableCell>{t("products.adLinks.adUrl")}</TableCell>
-                  <TableCell align="right">{t("products.adLinks.clicks")}</TableCell>
-                  <TableCell align="right">{t("products.adLinks.adCost")}</TableCell>
-                  <TableCell align="right">{t("products.metrics.conversionRate")}</TableCell>
-                  <TableCell align="right">{t("products.metrics.cpo")}</TableCell>
-                  <TableCell align="right">{t("products.metrics.roas")}</TableCell>
-                  <TableCell align="right">{t("products.metrics.profit")}</TableCell>
-                  {canEditProducts && <TableCell width={80} />}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {(productDetail as ProductWithLogs)?.ad_links?.length
-                  ? (productDetail as ProductWithLogs).ad_links!.map((ad) => (
-                      <TableRow key={ad.id}>
-                        <TableCell>{ad.name}</TableCell>
-                        <TableCell>{getPeriodLabel(ad.product_sale_period_id)}</TableCell>
-                        <TableCell sx={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {ad.ad_url ?? "-"}
-                        </TableCell>
-                        <TableCell align="right">{ad.clicks}</TableCell>
-                        <TableCell align="right">
-                          {Number(ad.ad_cost).toLocaleString()}
-                        </TableCell>
-                        <TableCell align="right">
-                          {ad.metrics?.conversion_rate != null
-                            ? `${(ad.metrics.conversion_rate * 100).toFixed(2)}%`
-                            : "-"}
-                        </TableCell>
-                        <TableCell align="right">
-                          {ad.metrics?.cpo != null
-                            ? ad.metrics.cpo.toLocaleString()
-                            : "-"}
-                        </TableCell>
-                        <TableCell align="right">
-                          {ad.metrics?.roas != null ? ad.metrics.roas.toFixed(2) : "-"}
-                        </TableCell>
-                        <TableCell align="right">
-                          {ad.metrics?.profit != null
-                            ? ad.metrics.profit.toLocaleString()
-                            : "-"}
-                        </TableCell>
-                        {canEditProducts && (
-                          <TableCell>
-                            <IconButton
-                              size="small"
-                              onClick={() => openAdLinkForm(ad)}
-                              aria-label={t("products.edit")}
-                            >
-                              <EditOutlinedIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => handleDeleteAdLink(ad)}
-                              aria-label={t("users.delete")}
-                            >
-                              <DeleteOutlineIcon fontSize="small" />
-                            </IconButton>
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    ))
-                  : (
-                      <TableRow>
-                        <TableCell colSpan={canEditProducts ? 10 : 9}>
-                          {t("products.noAdLinks")}
-                        </TableCell>
-                      </TableRow>
-                    )}
-              </TableBody>
-            </Table>
-          </Box>
-          {canEditProducts && (
-            <Button
-              size="small"
-              startIcon={<AddIcon />}
-              onClick={() => openAdLinkForm(null)}
-              disabled={salePeriods.length === 0}
-              sx={{ mb: 2 }}
-              title={salePeriods.length === 0 ? t("products.addSalePeriodFirst") : undefined}
-            >
-              {t("products.addAdLink")}
-            </Button>
-          )}
-
-          <Typography variant="subtitle2" sx={{ mt: 2, mb: 0.5 }}>
-            {t("products.editLogs")}
-          </Typography>
-          {loadingDetail ? (
-            <Typography variant="body2" color="text.secondary">
-              {t("products.loading")}
-            </Typography>
-          ) : editLogs.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              {t("products.noEditLogs")}
-            </Typography>
-          ) : (
-            <Box sx={logBlockSx}>
-              {editLogs.map((log) => (
-                <Box key={log.id} sx={{ mb: 1.5 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    {new Date(log.created_at).toLocaleString()} –{" "}
-                    {log.user?.name ?? log.user_id}
-                  </Typography>
-                  <Box component="ul" sx={{ m: 0, pl: 2 }}>
-                    {Object.entries(log.changes ?? {}).map(([key, val]) => (
-                      <li key={key}>
-                        <Typography variant="body2">
-                          {t(formatChangeKey(key))}: {String((val as { old?: unknown }).old)} →{" "}
-                          {String((val as { new?: unknown }).new)}
-                        </Typography>
-                      </li>
-                    ))}
-                  </Box>
-                </Box>
-              ))}
-            </Box>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={closeDialog}>{t("users.cancel")}</Button>
+        <DialogActions sx={{ flexWrap: "wrap", gap: 1 }}>
+          <Button type="button" onClick={closeVisibilityDialog}>
+            {t("users.cancel")}
+          </Button>
           {canEditProducts && (
-            <>
-              <Button
-                variant="outlined"
-                onClick={handleSaveVisibility}
-                disabled={updateVisibilityMutation.isPending}
-              >
-                {updateVisibilityMutation.isPending
-                  ? t("users.saving")
-                  : t("products.saveVisibility")}
-              </Button>
-              <Button
-                variant="contained"
-                onClick={handleSubmit}
-                disabled={updateProductMutation.isPending}
-              >
-                {updateProductMutation.isPending ? t("users.saving") : t("users.save")}
-              </Button>
-            </>
+            <Button
+              type="button"
+              variant="contained"
+              onClick={handleSaveVisibility}
+              disabled={updateVisibilityMutation.isPending}
+            >
+              {updateVisibilityMutation.isPending
+                ? t("users.saving")
+                : t("products.saveViewPermission")}
+            </Button>
           )}
         </DialogActions>
       </Dialog>
@@ -1344,84 +1471,6 @@ const ProductPageComponent = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={adLinkDialogOpen} onClose={closeAdLinkDialog} maxWidth="xs" fullWidth>
-        <DialogTitle>
-          {editingAdLink ? t("products.editAdLink") : t("products.addAdLink")}
-        </DialogTitle>
-        <DialogContent>
-          <FormControl fullWidth sx={dialogFieldSx} required={!editingAdLink}>
-            <InputLabel id="ad-link-period-label">{t("products.adLinks.salePeriod")}</InputLabel>
-            <Select<number>
-              labelId="ad-link-period-label"
-              label={t("products.adLinks.salePeriod")}
-              value={typeof adLinkSalePeriodId === "number" ? adLinkSalePeriodId : salePeriods[0]?.id ?? 0}
-              onChange={(e) => setAdLinkSalePeriodId(Number(e.target.value))}
-            >
-              {salePeriods.map((p) => (
-                <MenuItem key={p.id} value={p.id}>
-                  {p.start_at.slice(0, 10)} – {p.end_at.slice(0, 10)}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <TextField
-            fullWidth
-            label={t("products.adLinks.name")}
-            value={adLinkName}
-            onChange={(e) => setAdLinkName(e.target.value)}
-            sx={dialogFieldSx}
-          />
-          <TextField
-            fullWidth
-            label={t("products.adLinks.adUrl")}
-            value={adLinkUrl}
-            onChange={(e) => setAdLinkUrl(e.target.value)}
-            placeholder="https://..."
-            sx={dialogFieldSx}
-          />
-          <TextField
-            fullWidth
-            label={t("products.adLinks.adIdentifier")}
-            value={adLinkIdentifier}
-            onChange={(e) => setAdLinkIdentifier(e.target.value)}
-            placeholder="e.g. Facebook ad ID"
-            sx={dialogFieldSx}
-          />
-          <TextField
-            fullWidth
-            type="number"
-            label={t("products.adLinks.clicks")}
-            value={adLinkClicks}
-            onChange={(e) => setAdLinkClicks(e.target.value)}
-            inputProps={{ min: 0 }}
-            sx={dialogFieldSx}
-          />
-          <TextField
-            fullWidth
-            type="number"
-            label={t("products.adLinks.adCost")}
-            value={adLinkCost}
-            onChange={(e) => setAdLinkCost(e.target.value)}
-            inputProps={{ min: 0, step: 0.01 }}
-            sx={dialogFieldSx}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={closeAdLinkDialog}>{t("users.cancel")}</Button>
-          <Button
-            variant="contained"
-            onClick={handleSaveAdLink}
-            disabled={
-              (!editingAdLink && (adLinkSalePeriodId === "" || typeof adLinkSalePeriodId !== "number")) ||
-              !adLinkName.trim() ||
-              createAdLinkMutation.isPending ||
-              updateAdLinkMutation.isPending
-            }
-          >
-            {editingAdLink ? t("users.save") : t("products.createAdLink")}
-          </Button>
-        </DialogActions>
-      </Dialog>
       <Snackbar
         open={bulkDeleteToast.open}
         autoHideDuration={2500}
@@ -1434,6 +1483,28 @@ const ProductPageComponent = () => {
           variant="filled"
         >
           {bulkDeleteToast.message}
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        open={pageNotice.open}
+        autoHideDuration={4500}
+        onClose={handleClosePageNotice}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        sx={{
+          top: "50%",
+          left: "50%",
+          right: "auto",
+          bottom: "auto",
+          transform: "translate(-50%, -50%)",
+        }}
+      >
+        <Alert
+          onClose={() => setPageNotice((n) => ({ ...n, open: false }))}
+          severity={pageNotice.severity}
+          variant="filled"
+          sx={{ minWidth: 280, maxWidth: 480, boxShadow: 3 }}
+        >
+          {pageNotice.message}
         </Alert>
       </Snackbar>
     </Box>

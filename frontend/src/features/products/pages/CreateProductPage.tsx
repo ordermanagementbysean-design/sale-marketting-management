@@ -3,9 +3,15 @@ import { useTranslation } from "react-i18next";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
 import FormControl from "@mui/material/FormControl";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import FormGroup from "@mui/material/FormGroup";
+import FormLabel from "@mui/material/FormLabel";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
+import Radio from "@mui/material/Radio";
+import RadioGroup from "@mui/material/RadioGroup";
 import Select from "@mui/material/Select";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -13,9 +19,12 @@ import type { SxProps, Theme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { useCreateProduct } from "../hooks/productHooks";
+import { PRODUCT_VIEWER_ROLE_VALUES } from "../types";
 
-const wrapperSx: SxProps<Theme> = { maxWidth: 480 };
+const wrapperSx: SxProps<Theme> = { maxWidth: 520 };
 const fieldSx: SxProps<Theme> = { mb: 2 };
+
+const ALL_VIEWER_ROLES = [...PRODUCT_VIEWER_ROLE_VALUES];
 
 const CreateProductPageComponent = () => {
   const { t } = useTranslation();
@@ -32,7 +41,18 @@ const CreateProductPageComponent = () => {
   const [vatCode, setVatCode] = useState("");
   const [weightGram, setWeightGram] = useState("");
   const [status, setStatus] = useState<0 | 1>(1);
+  const [visibilityAllowAll, setVisibilityAllowAll] = useState(true);
+  const [restrictedRoles, setRestrictedRoles] = useState<string[]>(() => [...ALL_VIEWER_ROLES]);
   const [submitError, setSubmitError] = useState("");
+
+  const toggleRestrictedRole = useCallback((role: string, checked: boolean) => {
+    setRestrictedRoles((prev) => {
+      if (checked) {
+        return prev.includes(role) ? prev : [...prev, role];
+      }
+      return prev.filter((r) => r !== role);
+    });
+  }, []);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -40,8 +60,12 @@ const CreateProductPageComponent = () => {
       setSubmitError("");
       const n = name.trim();
       const c = code.trim();
-      if (!n || !c) {
+      if (!n) {
         setSubmitError(t("products.createProductPage.requiredFields"));
+        return;
+      }
+      if (!visibilityAllowAll && restrictedRoles.length === 0) {
+        setSubmitError(t("products.createProductPage.visibilityPickOneRole"));
         return;
       }
       const pp = Number(String(purchasePrice).replace(/,/g, "").trim()) || 0;
@@ -63,7 +87,7 @@ const CreateProductPageComponent = () => {
       createMutation.mutate(
         {
           name: n,
-          code: c,
+          ...(c ? { code: c } : {}),
           unit: unit.trim() || "cái",
           purchase_price: pp,
           unit_price: up,
@@ -71,6 +95,9 @@ const CreateProductPageComponent = () => {
           vat_code: vatCode.trim() || null,
           weight_gram: wg,
           status,
+          ...(visibilityAllowAll
+            ? { visibility_allow_all: true }
+            : { visibility_allow_all: false, visibility_roles: [...restrictedRoles] }),
         },
         {
           onSuccess: () => navigate("/products"),
@@ -94,6 +121,8 @@ const CreateProductPageComponent = () => {
       vatCode,
       weightGram,
       status,
+      visibilityAllowAll,
+      restrictedRoles,
       createMutation,
       navigate,
       t,
@@ -138,8 +167,8 @@ const CreateProductPageComponent = () => {
       />
       <TextField
         fullWidth
-        required
         label={t("products.fields.code")}
+        helperText={t("products.createProductPage.codeOptional")}
         value={code}
         onChange={(e) => setCode(e.target.value)}
         sx={fieldSx}
@@ -194,6 +223,53 @@ const CreateProductPageComponent = () => {
         inputProps={{ min: 0, step: 1 }}
         sx={fieldSx}
       />
+
+      <FormControl component="fieldset" variant="standard" sx={{ ...fieldSx, display: "block" }}>
+        <FormLabel component="legend">{t("products.createProductPage.visibilitySection")}</FormLabel>
+        <RadioGroup
+          value={visibilityAllowAll ? "all" : "restrict"}
+          onChange={(_, v) => {
+            const all = v === "all";
+            setVisibilityAllowAll(all);
+            if (!all && restrictedRoles.length === 0) {
+              setRestrictedRoles([...ALL_VIEWER_ROLES]);
+            }
+          }}
+        >
+          <FormControlLabel
+            value="all"
+            control={<Radio />}
+            label={t("products.createProductPage.visibilityAllowAll")}
+          />
+          <FormControlLabel
+            value="restrict"
+            control={<Radio />}
+            label={t("products.createProductPage.visibilityRestrict")}
+          />
+        </RadioGroup>
+        {!visibilityAllowAll && (
+          <>
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+              {t("products.createProductPage.visibilityRestrictHint")}
+            </Typography>
+            <FormGroup>
+              {PRODUCT_VIEWER_ROLE_VALUES.map((role) => (
+                <FormControlLabel
+                  key={role}
+                  control={
+                    <Checkbox
+                      checked={restrictedRoles.includes(role)}
+                      onChange={(_, checked) => toggleRestrictedRole(role, checked)}
+                    />
+                  }
+                  label={t(`products.createProductPage.viewerRole.${role}`)}
+                />
+              ))}
+            </FormGroup>
+          </>
+        )}
+      </FormControl>
+
       <FormControl fullWidth sx={fieldSx}>
         <InputLabel id="create-product-status-label">{t("products.fields.status")}</InputLabel>
         <Select

@@ -8,10 +8,14 @@ use App\Models\Product;
 use App\Models\ProductEditLog;
 use App\Models\ProductVisibility;
 use App\Models\User;
+use App\Services\ProductCodeGenerator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ProductController extends Controller
 {
@@ -26,6 +30,7 @@ class ProductController extends Controller
         } else {
             $query->where('status', 1);
         }
+
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
@@ -54,7 +59,7 @@ class ProductController extends Controller
 
         $validated = $request->validate([
             'name'           => ['required', 'string', 'max:255'],
-            'code'           => ['required', 'string', 'max:100', 'unique:products,code'],
+            'code'           => ['nullable', 'string', 'max:100', 'unique:products,code'],
             'unit'           => ['nullable', 'string', 'max:50'],
             'purchase_price' => ['nullable', 'numeric', 'min:0'],
             'unit_price'     => ['nullable', 'numeric', 'min:0'],
@@ -62,25 +67,47 @@ class ProductController extends Controller
             'vat_code'       => ['nullable', 'string', 'max:50'],
             'weight_gram'    => ['nullable', 'integer', 'min:0'],
             'status'         => ['nullable', 'integer', 'in:0,1'],
+            // set visibility rules: allow all or specific roles
+            'visibility_allow_all' => ['sometimes', 'boolean'],
+            'visibility_roles'     => ['sometimes', 'nullable', 'array'],
+            'visibility_roles.*'   => ['string', Rule::in(UserRole::productViewerRoles())],
         ]);
 
+        $allowAll      = $request->boolean('visibility_allow_all', true);
+        $selectedRoles = array_values(array_unique($validated['visibility_roles'] ?? []));
+        if (! $allowAll && empty($selectedRoles)) {
+            throw ValidationException::withMessages([
+                'visibility_roles' => ['Select at least one viewer role when restricting visibility.'],
+            ]);
+        }
+
         $payload = array_merge([
-            'unit'            => 'cái',
-            'purchase_price'  => 0,
-            'unit_price'      => 0,
-            'vat_percent'     => 0,
-            'vat_code'        => null,
-            'weight_gram'     => 0,
-            'status'          => 1,
+            'unit'           => 'cái',
+            'purchase_price' => 0,
+            'unit_price'     => 0,
+            'vat_percent'    => 0,
+            'vat_code'       => null,
+            'weight_gram'    => 0,
+            'status'         => 1,
         ], $validated);
 
-        $product = DB::transaction(function () use ($payload) {
+        unset($payload['visibility_allow_all'], $payload['visibility_roles']);
+        if (empty($selectedRoles)) {
+            $selectedRoles = UserRole::productViewerRoles();
+        }
+
+        $payload['code'] = ! empty($validated['code'])
+            ? trim((string) $validated['code'])
+            : app(ProductCodeGenerator::class)->generateProductCode((string) $validated['name']);
+
+        $product = DB::transaction(function () use ($payload, $allowAll, $selectedRoles) {
             $product = Product::create($payload);
-            foreach (UserRole::productViewerRoles() as $role) {
+
+            foreach ($selectedRoles as $role) {
                 ProductVisibility::create([
                     'product_id' => $product->id,
                     'role'       => $role,
-                    'allow_all'  => true,
+                    'allow_all'  => ($allowAll || in_array($role, $selectedRoles, true)),
                 ]);
             }
 
@@ -145,13 +172,6 @@ class ProductController extends Controller
 
         $product->save();
 
-        ProductEditLog::create([
-            'product_id' => $product->id,
-            'user_id'    => Auth::id(),
-            'changes'    => $changes,
-            'created_at' => now(),
-        ]);
-
         return response()->json($product);
     }
 
@@ -186,51 +206,115 @@ class ProductController extends Controller
         }
 
         $validated = $request->validate([
-            'visibility' => ['required', 'array'],
-            'visibility.marketing' => ['sometimes', 'array'],
-            'visibility.marketing.allow_all' => ['sometimes', 'boolean'],
-            'visibility.marketing.user_ids' => ['sometimes', 'array'],
-            'visibility.marketing.user_ids.*' => ['integer', 'exists:users,id'],
-            'visibility.sale' => ['sometimes', 'array'],
-            'visibility.sale.allow_all' => ['sometimes', 'boolean'],
-            'visibility.sale.user_ids' => ['sometimes', 'array'],
-            'visibility.sale.user_ids.*' => ['integer', 'exists:users,id'],
-            'visibility.customer_service' => ['sometimes', 'array'],
-            'visibility.customer_service.allow_all' => ['sometimes', 'boolean'],
-            'visibility.customer_service.user_ids' => ['sometimes', 'array'],
+            'visibility'                             => ['required', 'array'],
+            'visibility.marketing'                   => ['sometimes', 'array'],
+            'visibility.marketing.allow_all'         => ['sometimes', 'boolean'],
+            'visibility.marketing.user_ids'          => ['sometimes', 'array'],
+            'visibility.marketing.user_ids.*'        => ['integer', 'exists:users,id'],
+            'visibility.sale'                        => ['sometimes', 'array'],
+            'visibility.sale.allow_all'              => ['sometimes', 'boolean'],
+            'visibility.sale.user_ids'               => ['sometimes', 'array'],
+            'visibility.sale.user_ids.*'             => ['integer', 'exists:users,id'],
+            'visibility.customer_service'            => ['sometimes', 'array'],
+            'visibility.customer_service.allow_all'  => ['sometimes', 'boolean'],
+            'visibility.customer_service.user_ids'   => ['sometimes', 'array'],
             'visibility.customer_service.user_ids.*' => ['integer', 'exists:users,id'],
         ]);
 
         $visibility = $validated['visibility'];
         $departmentToRoles = [
-            'marketing' => ['marketing'],
-            'sale' => ['telesale', 'telesale_leader'],
-            'customer_service' => ['customer_service'],
+            'marketing'        => [UserRole::MARKETING->value],
+            'sale'             => [UserRole::TELESALE->value, UserRole::TELESALE_LEADER->value],
+            'customer_service' => [UserRole::CUSTOMER_SERVICE->value],
         ];
 
-        DB::transaction(function () use ($product, $visibility, $departmentToRoles) {
+        $oldAllowedUserIds = $product->allowedUsers()
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->sort()
+            ->values()
+            ->all();
+
+        $oldVisibilityByRole = $product->visibilityRules()
+            ->orderBy('role')
+            ->get(['role', 'allow_all'])
+            ->mapWithKeys(fn ($row) => [$row->role => (bool) $row->allow_all])
+            ->all();
+
+        $newVisibilityByRole = [];
+        foreach ($departmentToRoles as $department => $roles) {
+            $config   = $visibility[$department] ?? ['allow_all' => true];
+            $allowAll = (bool) ($config['allow_all'] ?? true);
+            foreach ($roles as $role) {
+                $newVisibilityByRole[$role] = $allowAll;
+            }
+        }
+        ksort($oldVisibilityByRole);
+        ksort($newVisibilityByRole);
+
+        DB::transaction(function () use (
+            $product,
+            $visibility,
+            $departmentToRoles,
+            $oldAllowedUserIds,
+            $oldVisibilityByRole,
+            $newVisibilityByRole
+        ) {
+            $allowedIds = [];
             foreach ($departmentToRoles as $department => $roles) {
-                $config = $visibility[$department] ?? ['allow_all' => true];
+                $config   = $visibility[$department] ?? ['allow_all' => true];
                 $allowAll = $config['allow_all'] ?? true;
-                $userIds = $config['user_ids'] ?? [];
+
                 foreach ($roles as $role) {
                     ProductVisibility::updateOrCreate(
                         ['product_id' => $product->id, 'role' => $role],
                         ['allow_all' => $allowAll]
                     );
                 }
-            }
-            $allowedIds = collect($departmentToRoles)->flatMap(function ($roles, $department) use ($visibility) {
-                $config = $visibility[$department] ?? ['allow_all' => true];
-                if (($config['allow_all'] ?? true) === false && ! empty($config['user_ids'] ?? [])) {
-                    return $config['user_ids'];
+
+                if (($config['allow_all'] ?? true) === false
+                    && ! empty($config['user_ids'] ?? [])
+                ) {
+                    $allowedIds = [...$allowedIds, ...$config['user_ids']];
                 }
-                return [];
-            })->unique()->values()->toArray();
-            $product->allowedUsers()->sync($allowedIds);
+            }
+
+            $newAllowedUserIds = array_values(array_unique(array_map('intval', $allowedIds)));
+            sort($newAllowedUserIds);
+
+            $product->allowedUsers()->sync($newAllowedUserIds);
+
+            $changes = [];
+            if ($oldAllowedUserIds !== $newAllowedUserIds) {
+                $unionIds = array_values(array_unique([...$oldAllowedUserIds, ...$newAllowedUserIds]));
+                $idToName = $unionIds === []
+                    ? collect()
+                    : User::query()->whereIn('id', $unionIds)->pluck('name', 'id');
+
+                $changes['allowed_users'] = [
+                    'old' => $this->mapAllowedUserIdsToLabels($oldAllowedUserIds, $idToName),
+                    'new' => $this->mapAllowedUserIdsToLabels($newAllowedUserIds, $idToName),
+                ];
+            }
+            if ($oldVisibilityByRole != $newVisibilityByRole) {
+                $changes['visibility_roles'] = [
+                    'old' => $oldVisibilityByRole,
+                    'new' => $newVisibilityByRole,
+                ];
+            }
+
+            if (! empty($changes)) {
+                ProductEditLog::create([
+                    'product_id' => $product->id,
+                    'user_id'    => Auth::id(),
+                    'changes'    => $changes,
+                    'created_at' => now(),
+                ]);
+            }
         });
 
         $product->load(['visibilityRules', 'allowedUsers:id,name,email,role']);
+
         return response()->json($product);
     }
 
@@ -250,5 +334,27 @@ class ProductController extends Controller
             ->get(['id', 'name', 'email', 'role']);
 
         return response()->json($users);
+    }
+
+    /**
+     * @param  array<int, int>  $ids
+     * @param  Collection<int, string|null>  $idToName
+     * @return array<int, string>
+     */
+    private function mapAllowedUserIdsToLabels(array $ids, Collection $idToName): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return collect($ids)
+            ->map(function (int $id) use ($idToName): string {
+                $name = $idToName->get($id);
+
+                return ($name !== null && $name !== '') ? (string) $name : "User #{$id}";
+            })
+            ->sort()
+            ->values()
+            ->all();
     }
 }

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Auth;
 
 class Product extends Model
 {
@@ -90,6 +91,30 @@ class Product extends Model
                     $u->where('users.id', $user->id);
                 });
             });
+        });
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::updated(function ($product) {
+            // Use wasChanged() to confirm the model was modified in the last save
+            // Usually, the 'updated' event only fires if something changed, 
+            // but getChanges() will tell you exactly what those changes were.
+            $changes = $product->getChanges();
+
+            // Optional: Don't log if the only change was 'updated_at'
+            unset($changes['updated_at']);
+            if (empty($changes)) {
+                return;
+            }
+
+            $product->editLogs()->create([
+                'user_id'    => Auth::user()->id,
+                'changes'    => $changes,
+                'created_at' => now(),
+            ]);  
         });
     }
 }

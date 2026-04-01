@@ -13,6 +13,7 @@ class ProductEditLog extends Model
         'product_id',
         'user_id',
         'changes',
+        'created_at',
     ];
 
     /**
