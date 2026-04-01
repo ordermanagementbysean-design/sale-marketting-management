@@ -250,7 +250,7 @@
     },
     "productImport": {
       "title": "Import products",
-      "subtitle": "Upload an Excel (.xlsx) with columns: name, code, status (0 = disabled, 1 = active), unit, purchase_price, unit_price, vat_percent, vat_code, weight_gram. Leave optional cells blank to use the same defaults as manual create (unit cái, numeric fields 0, vat_code empty). Processing runs in the background; wait for the result below.",
+      "subtitle": "Upload an Excel (.xlsx) with columns: name, code, status (0 = disabled, 1 = active), unit, purchase_price, unit_price, vat_percent, vat_code, weight_gram. Leave optional cells blank to use the same defaults as manual create (unit cái, numeric fields 0, vat_code empty). Processing runs in the background; you will receive a notification when it finishes.",
       "noPermission": "You need permission to edit products to import products.",
       "templateTitle": "Template & example",
       "templateDesc": "Download the example file. It includes sample values for unit, prices, VAT, vat_code, and weight (grams). Replace rows with your products.",
@@ -264,9 +264,9 @@
       "queueing": "Queueing…",
       "queueFailed": "Could not queue import.",
       "processingHint": "Import is running in the background. This page will update when it finishes.",
-      "resultSummary": "Created {{created}} product(s). See below for any row-level errors.",
-      "jobFailed": "The import job failed.",
-      "startOver": "Start over"
+      "resultSummary": "Created {{created}} product(s).",
+      "serverRowErrorsTitle": "Some rows could not be imported:",
+      "jobFailed": "The import job failed."
     },
     "salePeriodList": {
       "product": "Product",

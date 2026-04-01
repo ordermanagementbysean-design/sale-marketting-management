@@ -1,13 +1,16 @@
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
+import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { SxProps, Theme } from "@mui/material/styles";
 import { useAuth } from "@/features/auth/context/AuthContext";
+import type { ProductImportRowError } from "../types";
 import { useProductImportStatus, useQueueProductImport } from "../hooks/productHooks";
 import {
   toProductImportApiRow,
@@ -17,6 +20,19 @@ import {
 import { parseProductImportXlsx } from "../utils/productImportXlsx";
 
 const wrapperSx: SxProps<Theme> = { width: "100%", maxWidth: 720 };
+
+function queueErrorMessage(err: unknown, fallback: string): string {
+  if (err && typeof err === "object" && "response" in err) {
+    const data = (err as { response?: { data?: { message?: string } } }).response?.data;
+    if (data?.message && typeof data.message === "string" && data.message.trim()) {
+      return data.message;
+    }
+  }
+  if (err instanceof Error && err.message) {
+    return err.message;
+  }
+  return fallback;
+}
 
 const ProductImportPageComponent = () => {
   const { t } = useTranslation();
@@ -29,6 +45,16 @@ const ProductImportPageComponent = () => {
   const [sheetErrors, setSheetErrors] = useState<string[]>([]);
   const [parseResults, setParseResults] = useState<ProductImportParseResult[]>([]);
   const [validRows, setValidRows] = useState<ProductImportRow[]>([]);
+  const [postImportRowErrors, setPostImportRowErrors] = useState<ProductImportRowError[] | null>(
+    null
+  );
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "warning" | "info";
+  }>({ open: false, message: "", severity: "info" });
+
+  const terminalNotifiedImportIdRef = useRef<string | null>(null);
 
   const exampleUrl = `${import.meta.env.BASE_URL}product-import-example.xlsx`;
 
@@ -42,6 +68,7 @@ const ProductImportPageComponent = () => {
   const onFile = useCallback(
     async (file: File | null) => {
       resetParse();
+      setPostImportRowErrors(null);
       if (!file) {
         setFileLabel("");
         return;
@@ -62,10 +89,6 @@ const ProductImportPageComponent = () => {
   const polling =
     activeImportId != null &&
     (importStatus.data?.status === "queued" || importStatus.data?.status === "processing");
-  const doneStatus = activeImportId != null ? importStatus.data?.status : undefined;
-  const terminalImport =
-    activeImportId != null &&
-    (importStatus.data?.status === "completed" || importStatus.data?.status === "failed");
   const canQueue =
     canEditProducts &&
     sheetErrors.length === 0 &&
@@ -80,16 +103,56 @@ const ProductImportPageComponent = () => {
     const rows = validRows.map(toProductImportApiRow);
     queueMutation.mutate(rows, {
       onSuccess: (res) => {
+        terminalNotifiedImportIdRef.current = null;
         setActiveImportId(res.import_id);
       },
+      onError: (err: unknown) => {
+        const msg = queueErrorMessage(err, t("products.productImport.queueFailed"));
+        setSnackbar({ open: true, message: msg, severity: "error" });
+        resetParse();
+        setFileLabel("");
+        setPostImportRowErrors(null);
+        queueMutation.reset();
+      },
     });
-  }, [canQueue, queueMutation, validRows]);
+  }, [canQueue, queueMutation, resetParse, t, validRows]);
 
-  const handleStartOver = useCallback(() => {
+  useEffect(() => {
+    if (activeImportId == null || !importStatus.data) {
+      return;
+    }
+    const { status } = importStatus.data;
+    if (status !== "completed" && status !== "failed") {
+      return;
+    }
+    if (terminalNotifiedImportIdRef.current === activeImportId) {
+      return;
+    }
+    terminalNotifiedImportIdRef.current = activeImportId;
+
+    const data = importStatus.data!;
+    if (status === "failed") {
+      setSnackbar({
+        open: true,
+        message: data.message ?? t("products.productImport.jobFailed"),
+        severity: "error",
+      });
+      setPostImportRowErrors(null);
+    } else {
+      const rowErrors = data.row_errors ?? [];
+      setSnackbar({
+        open: true,
+        message: t("products.productImport.resultSummary", { created: data.created ?? 0 }),
+        severity: rowErrors.length ? "warning" : "success",
+      });
+      setPostImportRowErrors(rowErrors.length ? rowErrors : null);
+    }
+
+    setActiveImportId(null);
+    queueMutation.reset();
     resetParse();
     setFileLabel("");
-    queueMutation.reset();
-  }, [queueMutation, resetParse]);
+  }, [activeImportId, importStatus.data, queueMutation, resetParse, t]);
 
   return (
     <Box sx={wrapperSx}>
@@ -111,18 +174,13 @@ const ProductImportPageComponent = () => {
           {t("products.productImport.templateTitle")}
         </Typography>
         <Stack spacing={1}>
-          <Typography variant="body2" color="text.secondary">
-            {t("products.productImport.templateDesc")}
-          </Typography>
-          <Stack direction="row" flexWrap="wrap" useFlexGap spacing={1}>
-            <Button
-              variant="outlined"
-              component="a"
-              href={exampleUrl}
-              download="product-import-example.xlsx"
-            >
+          <Typography variant="body2" color="text.secondary" component="div">
+            {t("products.productImport.templateDesc")}{" "}
+            <Link href={exampleUrl} download="product-import-example.xlsx" underline="hover">
               {t("products.productImport.downloadStaticExample")}
-            </Button>
+            </Link>
+          </Typography>
+          <Box>
             <Button variant="outlined" component="label" disabled={!canEditProducts}>
               {t("products.productImport.chooseFile")}
               <input
@@ -136,7 +194,7 @@ const ProductImportPageComponent = () => {
                 }}
               />
             </Button>
-          </Stack>
+          </Box>
         </Stack>
       </Paper>
 
@@ -190,46 +248,44 @@ const ProductImportPageComponent = () => {
             : t("products.productImport.queueImport")}
         </Button>
 
-        {queueMutation.isError && (
-          <Alert severity="error">
-            {t("products.productImport.queueFailed")}
-            {queueMutation.error instanceof Error ? ` ${queueMutation.error.message}` : ""}
-          </Alert>
-        )}
-
-        {doneStatus === "completed" && importStatus.data && (
-          <Alert severity={importStatus.data.row_errors?.length ? "warning" : "success"}>
-            <Typography variant="body2">
-              {t("products.productImport.resultSummary", {
-                created: importStatus.data.created ?? 0,
-              })}
+        {postImportRowErrors != null && postImportRowErrors.length > 0 && (
+          <Alert severity="warning">
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              {t("products.productImport.serverRowErrorsTitle")}
             </Typography>
-            {importStatus.data.row_errors && importStatus.data.row_errors.length > 0 && (
-              <Box component="ul" sx={{ m: 0, pl: 2, mt: 1 }}>
-                {importStatus.data.row_errors.map((e) => (
-                  <li key={e.row}>
-                    <Typography variant="body2">
-                      {t("products.productImport.rowPrefix", { row: e.row })}: {e.messages.join("; ")}
-                    </Typography>
-                  </li>
-                ))}
-              </Box>
-            )}
+            <Box component="ul" sx={{ m: 0, pl: 2 }}>
+              {postImportRowErrors.map((e) => (
+                <li key={e.row}>
+                  <Typography variant="body2">
+                    {t("products.productImport.rowPrefix", { row: e.row })}: {e.messages.join("; ")}
+                  </Typography>
+                </li>
+              ))}
+            </Box>
           </Alert>
-        )}
-
-        {doneStatus === "failed" && (
-          <Alert severity="error">
-            {importStatus.data?.message ?? t("products.productImport.jobFailed")}
-          </Alert>
-        )}
-
-        {terminalImport && (
-          <Button variant="outlined" onClick={handleStartOver}>
-            {t("products.productImport.startOver")}
-          </Button>
         )}
       </Stack>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={snackbar.severity === "error" ? 8000 : 6000}
+        onClose={(_e, reason) => {
+          if (reason === "clickaway") {
+            return;
+          }
+          setSnackbar((s) => ({ ...s, open: false }));
+        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

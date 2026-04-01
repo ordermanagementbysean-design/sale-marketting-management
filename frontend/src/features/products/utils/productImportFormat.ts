@@ -88,8 +88,7 @@ export function parseProductImportRecord(
   if (name.length > 255) errors.push("name must be at most 255 characters");
 
   const code = trimCell(record.code);
-  if (!code) errors.push("code is required");
-  if (code.length > 100) errors.push("code must be at most 100 characters");
+  if (code.length > 100) errors.push("code must be less than 200 characters");
 
   const statusRaw = trimCell(String(record.status ?? ""));
   const statusParsed = parseProductStatusCell(statusRaw);

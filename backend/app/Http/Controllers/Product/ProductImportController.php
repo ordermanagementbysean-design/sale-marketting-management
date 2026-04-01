@@ -21,7 +21,7 @@ class ProductImportController extends Controller
         $validated = $request->validate([
             'rows'                   => ['required', 'array', 'min:1', 'max:500'],
             'rows.*.name'            => ['required', 'string', 'max:255'],
-            'rows.*.code'            => ['required', 'string', 'max:100'],
+            'rows.*.code'            => ['nullable', 'string', 'max:200'],
             'rows.*.status'          => ['required', 'integer', 'in:0,1'],
             'rows.*.unit'            => ['nullable', 'string', 'max:50'],
             'rows.*.purchase_price'  => ['nullable', 'numeric', 'min:0'],
