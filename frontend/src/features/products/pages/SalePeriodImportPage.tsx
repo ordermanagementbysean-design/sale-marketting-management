@@ -3,11 +3,14 @@ import { useTranslation } from "react-i18next";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
+import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { SxProps, Theme } from "@mui/material/styles";
 import { useAuth } from "@/features/auth/context/AuthContext";
+import type { SalePeriodImportRowError } from "../types";
 import { useImportSalePeriods } from "../hooks/productHooks";
 import {
   toSalePeriodImportApiRow,
@@ -15,19 +18,38 @@ import {
   type SalePeriodImportRow,
 } from "../utils/salePeriodImportFormat";
 import { parseSalePeriodImportXlsx } from "../utils/salePeriodImportXlsx";
-import type { SalePeriodImportResponse } from "../types";
 
 const wrapperSx: SxProps<Theme> = { width: "100%", maxWidth: 720 };
+
+function importErrorMessage(err: unknown, fallback: string): string {
+  if (err && typeof err === "object" && "response" in err) {
+    const data = (err as { response?: { data?: { message?: string } } }).response?.data;
+    if (data?.message && typeof data.message === "string" && data.message.trim()) {
+      return data.message;
+    }
+  }
+  if (err instanceof Error && err.message) {
+    return err.message;
+  }
+  return fallback;
+}
 
 const SalePeriodImportPageComponent = () => {
   const { t } = useTranslation();
   const { canEditProducts } = useAuth();
   const importMutation = useImportSalePeriods();
-  const [lastResult, setLastResult] = useState<SalePeriodImportResponse | null>(null);
   const [fileLabel, setFileLabel] = useState<string>("");
   const [sheetErrors, setSheetErrors] = useState<string[]>([]);
   const [parseResults, setParseResults] = useState<SalePeriodImportParseResult[]>([]);
   const [validRows, setValidRows] = useState<SalePeriodImportRow[]>([]);
+  const [postImportRowErrors, setPostImportRowErrors] = useState<SalePeriodImportRowError[] | null>(
+    null
+  );
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "warning" | "info";
+  }>({ open: false, message: "", severity: "info" });
 
   const exampleUrl = `${import.meta.env.BASE_URL}sale-period-import-example.xlsx`;
 
@@ -35,12 +57,12 @@ const SalePeriodImportPageComponent = () => {
     setSheetErrors([]);
     setParseResults([]);
     setValidRows([]);
-    setLastResult(null);
   }, []);
 
   const onFile = useCallback(
     async (file: File | null) => {
       resetParse();
+      setPostImportRowErrors(null);
       if (!file) {
         setFileLabel("");
         return;
@@ -67,9 +89,31 @@ const SalePeriodImportPageComponent = () => {
     if (!canImport) return;
     const rows = validRows.map(toSalePeriodImportApiRow);
     importMutation.mutate(rows, {
-      onSuccess: (res) => setLastResult(res),
+      onSuccess: (res) => {
+        const rowErrors = res.row_errors ?? [];
+        setSnackbar({
+          open: true,
+          message: t("products.salePeriodImport.resultSummary", {
+            periods: res.created_periods,
+            entries: res.created_cost_entries,
+          }),
+          severity: rowErrors.length ? "warning" : "success",
+        });
+        setPostImportRowErrors(rowErrors.length ? rowErrors : null);
+        resetParse();
+        setFileLabel("");
+        importMutation.reset();
+      },
+      onError: (err: unknown) => {
+        const msg = importErrorMessage(err, t("products.salePeriodImport.importFailed"));
+        setSnackbar({ open: true, message: msg, severity: "error" });
+        resetParse();
+        setFileLabel("");
+        setPostImportRowErrors(null);
+        importMutation.reset();
+      },
     });
-  }, [canImport, importMutation, validRows]);
+  }, [canImport, importMutation, resetParse, t, validRows]);
 
   return (
     <Box sx={wrapperSx}>
@@ -91,18 +135,13 @@ const SalePeriodImportPageComponent = () => {
           {t("products.salePeriodImport.templateTitle")}
         </Typography>
         <Stack spacing={1}>
-          <Typography variant="body2" color="text.secondary">
-            {t("products.salePeriodImport.templateDesc")}
-          </Typography>
-          <Stack direction="row" flexWrap="wrap" useFlexGap spacing={1}>
-            <Button
-              variant="outlined"
-              component="a"
-              href={exampleUrl}
-              download="sale-period-import-example.xlsx"
-            >
+          <Typography variant="body2" color="text.secondary" component="div">
+            {t("products.salePeriodImport.templateDesc")}{" "}
+            <Link href={exampleUrl} download="sale-period-import-example.xlsx" underline="hover">
               {t("products.salePeriodImport.downloadStaticExample")}
-            </Button>
+            </Link>
+          </Typography>
+          <Box>
             <Button variant="outlined" component="label" disabled={!canEditProducts}>
               {t("products.salePeriodImport.chooseFile")}
               <input
@@ -116,7 +155,7 @@ const SalePeriodImportPageComponent = () => {
                 }}
               />
             </Button>
-          </Stack>
+          </Box>
         </Stack>
       </Paper>
 
@@ -161,35 +200,44 @@ const SalePeriodImportPageComponent = () => {
           {importMutation.isPending ? t("products.salePeriodImport.importing") : t("products.salePeriodImport.import")}
         </Button>
 
-        {importMutation.isError && (
-          <Alert severity="error">
-            {t("products.salePeriodImport.importFailed")}
-            {importMutation.error instanceof Error ? ` ${importMutation.error.message}` : ""}
-          </Alert>
-        )}
-
-        {lastResult && (
-          <Alert severity={lastResult.row_errors.length ? "warning" : "success"}>
-            <Typography variant="body2">
-              {t("products.salePeriodImport.resultSummary", {
-                periods: lastResult.created_periods,
-                entries: lastResult.created_cost_entries,
-              })}
+        {postImportRowErrors != null && postImportRowErrors.length > 0 && (
+          <Alert severity="warning">
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              {t("products.salePeriodImport.serverRowErrorsTitle")}
             </Typography>
-            {lastResult.row_errors.length > 0 && (
-              <Box component="ul" sx={{ m: 0, pl: 2, mt: 1 }}>
-                {lastResult.row_errors.map((e) => (
-                  <li key={e.row}>
-                    <Typography variant="body2">
-                      {t("products.salePeriodImport.rowPrefix", { row: e.row })}: {e.messages.join("; ")}
-                    </Typography>
-                  </li>
-                ))}
-              </Box>
-            )}
+            <Box component="ul" sx={{ m: 0, pl: 2 }}>
+              {postImportRowErrors.map((e) => (
+                <li key={e.row}>
+                  <Typography variant="body2">
+                    {t("products.salePeriodImport.rowPrefix", { row: e.row })}: {e.messages.join("; ")}
+                  </Typography>
+                </li>
+              ))}
+            </Box>
           </Alert>
         )}
       </Stack>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={snackbar.severity === "error" ? 8000 : 6000}
+        onClose={(_e, reason) => {
+          if (reason === "clickaway") {
+            return;
+          }
+          setSnackbar((s) => ({ ...s, open: false }));
+        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
