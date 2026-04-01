@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -7,23 +7,28 @@ import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
+import IconButton from "@mui/material/IconButton";
 import type { SxProps, Theme } from "@mui/material/styles";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
 import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
 import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
+import { HUNGVIET_SMARTHOME_GALLERY_IMAGES } from "../constants/siteGalleryImages";
 
 const palette = {
-  bg: "#0b1220",
-  bgElevated: "#121a2b",
-  accent: "#e8b84a",
-  accentMuted: "rgba(232, 184, 74, 0.15)",
-  text: "#e8edf7",
-  textMuted: "rgba(232, 237, 247, 0.72)",
-  border: "rgba(255,255,255,0.08)",
-  mesh:
-    "radial-gradient(ellipse 80% 50% at 20% -10%, rgba(232, 184, 74, 0.18), transparent 50%), radial-gradient(ellipse 60% 40% at 100% 0%, rgba(56, 189, 248, 0.12), transparent 45%), linear-gradient(180deg, #0b1220 0%, #0a0f18 100%)",
+  bg: "#ffffff",
+  bgMuted: "#f5f5f7",
+  bgElevated: "#ffffff",
+  text: "#1a1a1a",
+  textMuted: "rgba(0, 0, 0, 0.62)",
+  border: "rgba(0, 0, 0, 0.09)",
+  accent: "#b45309",
+  accentHover: "#92400e",
+  accentSoft: "rgba(180, 83, 9, 0.1)",
+  kicker: "#92400e",
 };
 
 const fontDisplay = '"Fraunces", "Georgia", serif';
@@ -32,6 +37,161 @@ const fontBody = '"DM Sans", system-ui, sans-serif';
 const sectionSx: SxProps<Theme> = {
   py: { xs: 6, md: 9 },
 };
+
+const SLIDER_INTERVAL_MS = 5500;
+
+const LandingProductSlider = memo(function LandingProductSlider({
+  images,
+}: {
+  images: readonly string[];
+}) {
+  const { t } = useTranslation();
+  const [index, setIndex] = useState(0);
+  const len = images.length;
+
+  const goPrev = useCallback(() => {
+    setIndex((i) => (i - 1 + len) % len);
+  }, [len]);
+
+  const goNext = useCallback(() => {
+    setIndex((i) => (i + 1) % len);
+  }, [len]);
+
+  useEffect(() => {
+    if (len <= 1) return undefined;
+    const id = window.setInterval(() => {
+      setIndex((i) => (i + 1) % len);
+    }, SLIDER_INTERVAL_MS);
+    return () => window.clearInterval(id);
+  }, [len]);
+
+  if (len === 0) return null;
+
+  return (
+    <Box
+      role="region"
+      aria-roledescription="carousel"
+      aria-label={t("landing.productsShowcaseTitle")}
+      sx={{
+        position: "relative",
+        borderRadius: 2,
+        overflow: "hidden",
+        bgcolor: "#ececec",
+        border: `1px solid ${palette.border}`,
+        boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          width: "100%",
+          transform: `translateX(-${index * 100}%)`,
+          transition: "transform 0.55s cubic-bezier(0.4, 0, 0.2, 1)",
+        }}
+      >
+        {images.map((src, i) => (
+          <Box
+            key={`${src}-${i}`}
+            sx={{
+              flex: "0 0 100%",
+              position: "relative",
+              aspectRatio: { xs: "4 / 3", md: "21 / 9" },
+              maxHeight: { md: 420 },
+              bgcolor: "#e8e8e8",
+            }}
+          >
+            <Box
+              component="img"
+              src={src}
+              alt=""
+              loading={i === 0 ? "eager" : "lazy"}
+              referrerPolicy="no-referrer-when-downgrade"
+              sx={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "center",
+              }}
+            />
+          </Box>
+        ))}
+      </Box>
+
+      {len > 1 && (
+        <>
+          <IconButton
+            onClick={goPrev}
+            aria-label={t("landing.sliderPrev")}
+            sx={{
+              position: "absolute",
+              left: 8,
+              top: "50%",
+              transform: "translateY(-50%)",
+              bgcolor: "rgba(255,255,255,0.92)",
+              color: palette.text,
+              boxShadow: 1,
+              "&:hover": { bgcolor: "#fff" },
+            }}
+            size="large"
+          >
+            <ChevronLeftIcon />
+          </IconButton>
+          <IconButton
+            onClick={goNext}
+            aria-label={t("landing.sliderNext")}
+            sx={{
+              position: "absolute",
+              right: 8,
+              top: "50%",
+              transform: "translateY(-50%)",
+              bgcolor: "rgba(255,255,255,0.92)",
+              color: palette.text,
+              boxShadow: 1,
+              "&:hover": { bgcolor: "#fff" },
+            }}
+            size="large"
+          >
+            <ChevronRightIcon />
+          </IconButton>
+          <Stack
+            direction="row"
+            spacing={0.75}
+            justifyContent="center"
+            sx={{
+              position: "absolute",
+              bottom: 12,
+              left: 0,
+              right: 0,
+            }}
+          >
+            {images.map((_, i) => (
+              <Box
+                key={i}
+                component="button"
+                type="button"
+                onClick={() => setIndex(i)}
+                aria-label={`${i + 1} / ${len}`}
+                sx={{
+                  width: i === index ? 22 : 8,
+                  height: 8,
+                  p: 0,
+                  border: "none",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                  bgcolor: i === index ? palette.accent : "rgba(255,255,255,0.55)",
+                  transition: "width 0.25s, background 0.25s",
+                  "&:hover": { bgcolor: i === index ? palette.accentHover : "rgba(255,255,255,0.85)" },
+                }}
+              />
+            ))}
+          </Stack>
+        </>
+      )}
+    </Box>
+  );
+});
 
 const CompanyLandingPageComponent = () => {
   const { t, i18n } = useTranslation();
@@ -87,8 +247,6 @@ const CompanyLandingPageComponent = () => {
         bgcolor: palette.bg,
         color: palette.text,
         fontFamily: fontBody,
-        backgroundImage: palette.mesh,
-        backgroundAttachment: "fixed",
       }}
     >
       <Box
@@ -98,8 +256,9 @@ const CompanyLandingPageComponent = () => {
           top: 0,
           zIndex: 10,
           borderBottom: `1px solid ${palette.border}`,
+          bgcolor: "rgba(255,255,255,0.92)",
           backdropFilter: "blur(12px)",
-          bgcolor: "rgba(11, 18, 32, 0.85)",
+          boxShadow: "0 1px 0 rgba(0,0,0,0.04)",
         }}
       >
         <Container maxWidth="lg" sx={{ py: 2, display: "flex", alignItems: "center", gap: 2 }}>
@@ -111,6 +270,7 @@ const CompanyLandingPageComponent = () => {
               fontSize: { xs: "1.05rem", sm: "1.2rem" },
               letterSpacing: "-0.02em",
               flex: 1,
+              color: palette.text,
             }}
           >
             {t("landing.navBrand")}
@@ -124,7 +284,7 @@ const CompanyLandingPageComponent = () => {
             <Typography
               variant="overline"
               sx={{
-                color: palette.accent,
+                color: palette.kicker,
                 letterSpacing: "0.2em",
                 fontWeight: 600,
                 display: "block",
@@ -142,6 +302,7 @@ const CompanyLandingPageComponent = () => {
                 lineHeight: 1.15,
                 letterSpacing: "-0.03em",
                 mb: 2,
+                color: palette.text,
               }}
             >
               {t("landing.heroTitle")}
@@ -164,10 +325,11 @@ const CompanyLandingPageComponent = () => {
                 href="#about"
                 sx={{
                   bgcolor: palette.accent,
-                  color: palette.bg,
+                  color: "#fff",
                   fontWeight: 700,
                   px: 3,
-                  "&:hover": { bgcolor: "#f0c65c" },
+                  boxShadow: "none",
+                  "&:hover": { bgcolor: palette.accentHover, boxShadow: "none" },
                 }}
               >
                 {t("landing.ctaDiscover")}
@@ -182,21 +344,13 @@ const CompanyLandingPageComponent = () => {
                 p: 3,
                 bgcolor: palette.bgElevated,
                 border: `1px solid ${palette.border}`,
-                overflow: "hidden",
-                "&::before": {
-                  content: '""',
-                  position: "absolute",
-                  inset: 0,
-                  background:
-                    "linear-gradient(135deg, rgba(232,184,74,0.08) 0%, transparent 55%, rgba(56,189,248,0.06) 100%)",
-                  pointerEvents: "none",
-                },
+                boxShadow: "0 8px 30px rgba(0,0,0,0.06)",
               }}
             >
-              <Typography variant="subtitle2" sx={{ color: palette.accent, mb: 2, position: "relative" }}>
+              <Typography variant="subtitle2" sx={{ color: palette.accent, mb: 2, fontWeight: 700 }}>
                 {t("landing.statsHeading")}
               </Typography>
-              <Grid container spacing={2} sx={{ position: "relative" }}>
+              <Grid container spacing={2}>
                 {[
                   { label: t("landing.statFounded"), value: "2025" },
                   { label: t("landing.statHQ"), value: t("landing.statHQValue") },
@@ -204,7 +358,7 @@ const CompanyLandingPageComponent = () => {
                   { label: t("landing.statField"), value: t("landing.statFieldShort") },
                 ].map((row) => (
                   <Grid size={6} key={row.label}>
-                    <Typography variant="h5" sx={{ fontFamily: fontDisplay, fontWeight: 700 }}>
+                    <Typography variant="h5" sx={{ fontFamily: fontDisplay, fontWeight: 700, color: palette.text }}>
                       {row.value}
                     </Typography>
                     <Typography variant="caption" sx={{ color: palette.textMuted }}>
@@ -218,7 +372,7 @@ const CompanyLandingPageComponent = () => {
         </Grid>
       </Container>
 
-      <Box id="about" sx={{ ...sectionSx, bgcolor: "rgba(0,0,0,0.2)" }}>
+      <Box id="about" sx={{ ...sectionSx, bgcolor: palette.bgMuted }}>
         <Container maxWidth="lg">
           <Typography
             component="h2"
@@ -227,6 +381,7 @@ const CompanyLandingPageComponent = () => {
               fontWeight: 700,
               fontSize: { xs: "1.75rem", md: "2.25rem" },
               mb: 2,
+              color: palette.text,
             }}
           >
             {t("landing.aboutTitle")}
@@ -240,7 +395,7 @@ const CompanyLandingPageComponent = () => {
         </Container>
       </Box>
 
-      <Box sx={sectionSx}>
+      <Box sx={{ ...sectionSx, bgcolor: palette.bg }}>
         <Container maxWidth="lg">
           <Typography
             component="h2"
@@ -249,17 +404,18 @@ const CompanyLandingPageComponent = () => {
               fontWeight: 700,
               fontSize: { xs: "1.75rem", md: "2.25rem" },
               mb: 3,
+              color: palette.text,
             }}
           >
             {t("landing.productsTitle")}
           </Typography>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 5 }}>
             {productItems.map((label) => (
               <Chip
                 key={label}
                 label={label}
                 sx={{
-                  bgcolor: palette.bgElevated,
+                  bgcolor: "#f3f4f6",
                   color: palette.text,
                   border: `1px solid ${palette.border}`,
                   py: 2.5,
@@ -270,10 +426,36 @@ const CompanyLandingPageComponent = () => {
               />
             ))}
           </Box>
+
+          <Box id="products-showcase" sx={{ textAlign: "center", maxWidth: 900, mx: "auto", mb: 3 }}>
+            <Typography
+              component="h3"
+              sx={{
+                fontFamily: fontDisplay,
+                fontWeight: 700,
+                fontSize: { xs: "1.5rem", md: "1.85rem" },
+                mb: 2,
+                color: palette.text,
+              }}
+            >
+              {t("landing.productsShowcaseTitle")}
+            </Typography>
+            <Typography
+              sx={{
+                color: palette.textMuted,
+                lineHeight: 1.8,
+                fontSize: { xs: "0.95rem", md: "1.05rem" },
+              }}
+            >
+              {t("landing.productsShowcaseIntro")}
+            </Typography>
+          </Box>
+
+          <LandingProductSlider images={HUNGVIET_SMARTHOME_GALLERY_IMAGES} />
         </Container>
       </Box>
 
-      <Box sx={{ ...sectionSx, bgcolor: "rgba(0,0,0,0.2)" }}>
+      <Box sx={{ ...sectionSx, bgcolor: palette.bgMuted }}>
         <Container maxWidth="lg">
           <Grid container spacing={4}>
             <Grid size={{ xs: 12, md: 4 }}>
@@ -338,7 +520,7 @@ const CompanyLandingPageComponent = () => {
         </Container>
       </Box>
 
-      <Box sx={sectionSx}>
+      <Box sx={{ ...sectionSx, bgcolor: palette.bg }}>
         <Container maxWidth="lg">
           <Typography
             component="h2"
@@ -347,6 +529,7 @@ const CompanyLandingPageComponent = () => {
               fontWeight: 700,
               fontSize: { xs: "1.75rem", md: "2.25rem" },
               mb: 3,
+              color: palette.text,
             }}
           >
             {t("landing.valuesTitle")}
@@ -361,15 +544,18 @@ const CompanyLandingPageComponent = () => {
                     borderRadius: 2,
                     bgcolor: palette.bgElevated,
                     border: `1px solid ${palette.border}`,
-                    transition: "transform 0.2s, border-color 0.2s",
+                    boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
+                    transition: "transform 0.2s, box-shadow 0.2s",
                     "&:hover": {
                       transform: "translateY(-2px)",
-                      borderColor: "rgba(232, 184, 74, 0.35)",
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.07)",
                     },
                   }}
                 >
                   <Box sx={{ color: palette.accent, mb: 1.5 }}>{item.icon}</Box>
-                  <Typography sx={{ fontWeight: 700, mb: 1, fontFamily: fontDisplay }}>{t(item.titleKey)}</Typography>
+                  <Typography sx={{ fontWeight: 700, mb: 1, fontFamily: fontDisplay, color: palette.text }}>
+                    {t(item.titleKey)}
+                  </Typography>
                   <Typography variant="body2" sx={{ color: palette.textMuted, lineHeight: 1.7 }}>
                     {t(item.bodyKey)}
                   </Typography>
@@ -385,13 +571,15 @@ const CompanyLandingPageComponent = () => {
         sx={{
           borderTop: `1px solid ${palette.border}`,
           py: 5,
-          bgcolor: palette.bgElevated,
+          bgcolor: palette.bgMuted,
         }}
       >
         <Container maxWidth="lg">
           <Grid container spacing={4}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Typography sx={{ fontFamily: fontDisplay, fontWeight: 700, mb: 2 }}>{t("landing.footerCompany")}</Typography>
+              <Typography sx={{ fontFamily: fontDisplay, fontWeight: 700, mb: 2, color: palette.text }}>
+                {t("landing.footerCompany")}
+              </Typography>
               <Typography variant="body2" sx={{ color: palette.textMuted, lineHeight: 1.8 }}>
                 {t("landing.footerAddress")}
                 <br />
@@ -411,7 +599,7 @@ const CompanyLandingPageComponent = () => {
                 href="https://www.hungvietsmarthome.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                sx={{ color: palette.accent }}
+                sx={{ color: palette.accent, fontWeight: 600 }}
               >
                 hungvietsmarthome.com →
               </Button>

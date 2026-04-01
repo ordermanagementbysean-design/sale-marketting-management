@@ -39,6 +39,10 @@
     "aboutBody": "Hung Viet Smart Home Co., Ltd. supplies smart-home equipment and solutions in Vietnam, with a focus on appliances and automation for contemporary spaces.",
     "aboutBody2": "We build on modern technology to improve everyday life through convenient, safe, and energy-efficient products.",
     "productsTitle": "Key products & services",
+    "productsShowcaseTitle": "Our products",
+    "productsShowcaseIntro": "At Hung Viet Smart Home, we offer a wide range of household products and smart-home devices that enhance comfort, safety, and quality of life for every family.",
+    "sliderPrev": "Previous image",
+    "sliderNext": "Next image",
     "products": {
       "lighting": "Smart lighting (remote control & automation)",
       "security": "Security & monitoring (cameras, alerts)",

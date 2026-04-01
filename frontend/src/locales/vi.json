@@ -39,6 +39,10 @@
     "aboutBody": "Công ty TNHH Hưng Việt Smart Home hoạt động trong lĩnh vực cung cấp thiết bị và giải pháp nhà thông minh (Smart Home) tại Việt Nam, tập trung vào đồ gia dụng và hệ thống tự động hóa cho không gian sống hiện đại.",
     "aboutBody2": "Định hướng phát triển dựa trên nền tảng công nghệ hiện đại, nâng cao chất lượng cuộc sống qua sản phẩm tiện nghi, an toàn và tiết kiệm năng lượng.",
     "productsTitle": "Sản phẩm & dịch vụ chính",
+    "productsShowcaseTitle": "Sản phẩm của chúng tôi",
+    "productsShowcaseIntro": "Tại Hưng Việt Smart Home, chúng tôi cung cấp đa dạng các sản phẩm đồ gia dụng và thiết bị nhà thông minh, giúp nâng cao tiện nghi, an toàn và chất lượng cuộc sống cho mọi gia đình.",
+    "sliderPrev": "Ảnh trước",
+    "sliderNext": "Ảnh sau",
     "products": {
       "lighting": "Thiết bị chiếu sáng thông minh (điều khiển từ xa, tự động hóa)",
       "security": "Thiết bị an ninh – giám sát (camera, hệ thống cảnh báo)",
