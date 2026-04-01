@@ -2,6 +2,7 @@ import { memo, type ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
+import { panelPath } from "@/constants/routes";
 import { useAuth } from "../context/AuthContext";
 
 interface ProtectedRouteProps {
@@ -29,7 +30,7 @@ const ProtectedRouteComponent = ({ children }: ProtectedRouteProps) => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to={panelPath("login")} state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

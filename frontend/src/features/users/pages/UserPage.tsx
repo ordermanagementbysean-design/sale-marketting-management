@@ -28,6 +28,7 @@ import {
 } from "../hooks/userHooks";
 import type { CreateUserPayload, UserWithRoles } from "../types";
 import { Navigate } from "react-router-dom";
+import { panelPath } from "@/constants/routes";
 
 const getRowId = (row: UserWithRoles) => row.id;
 
@@ -219,7 +220,7 @@ const UserPageComponent = () => {
   ]);
 
   if (!canManageUsers) {
-    return <Navigate to="/profile" replace />;
+    return <Navigate to={panelPath("/profile")} replace />;
   }
 
   return (

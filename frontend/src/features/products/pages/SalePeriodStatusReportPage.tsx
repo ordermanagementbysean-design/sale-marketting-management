@@ -1,6 +1,7 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link as RouterLink } from "react-router-dom";
+import { panelPath } from "@/constants/routes";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -266,7 +267,7 @@ const SalePeriodStatusReportPageComponent = () => {
         <Typography variant="h5" component="h1">
           {t("products.salePeriodStatusReport.title")}
         </Typography>
-        <Button component={RouterLink} to="/products/sale-periods/status-report/profit-colors" variant="outlined" size="small">
+        <Button component={RouterLink} to={panelPath("/products/sale-periods/status-report/profit-colors")} variant="outlined" size="small">
           {t("products.salePeriodStatusReport.profitColors.openSettings")}
         </Button>
       </Stack>

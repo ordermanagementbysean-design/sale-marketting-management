@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { useNavigate } from "react-router-dom";
+import { panelPath } from "@/constants/routes";
 import { AUTH_TOKEN_KEY, setAuthToken } from "@/shared/utils/axios";
 import { getMe, login as loginApi, logout as logoutApi } from "../services/authApi";
 import type { LoginCredentials, User } from "../types";
@@ -72,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       canEditProducts: can_edit_products,
       canViewSalePeriodsAndReports: can_view_sale_periods_and_reports,
     });
-    navigate("/profile", { replace: true });
+    navigate(panelPath("/profile"), { replace: true });
   }, [navigate]);
 
   const logout = useCallback(async () => {
@@ -89,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         canEditProducts: false,
         canViewSalePeriodsAndReports: false,
       });
-      navigate("/login", { replace: true });
+      navigate(panelPath("login"), { replace: true });
     }
   }, [navigate]);
 

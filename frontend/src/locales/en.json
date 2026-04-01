@@ -13,6 +13,80 @@
     "vi": "Tiếng Việt",
     "en": "English"
   },
+  "notFound": {
+    "documentTitle": "404 — Page not found",
+    "tagline": "Way off course",
+    "goHome": "Back to home",
+    "goPanel": "Back to panel"
+  },
+  "landing": {
+    "navBrand": "Hung Viet Smart Home",
+    "officialSite": "Company website",
+    "panelLogin": "Sign in to panel",
+    "heroKicker": "SMART HOME · VIETNAM",
+    "heroTitle": "Smart home solutions and intelligent appliances for modern living",
+    "heroSubtitle": "We aim to be a trusted smart-home provider in Vietnam, expand the market, and meet the demand for smart, energy-efficient, and safe homes.",
+    "ctaDiscover": "Explore overview",
+    "statsHeading": "At a glance",
+    "statFounded": "Founded",
+    "statHQ": "Head office",
+    "statHQValue": "Ho Chi Minh City",
+    "statTeam": "Team size",
+    "statTeamValue": "~100 people",
+    "statField": "Focus",
+    "statFieldShort": "Smart home & smart devices",
+    "aboutTitle": "About Hung Viet Smart Home",
+    "aboutBody": "Hung Viet Smart Home Co., Ltd. supplies smart-home equipment and solutions in Vietnam, with a focus on appliances and automation for contemporary spaces.",
+    "aboutBody2": "We build on modern technology to improve everyday life through convenient, safe, and energy-efficient products.",
+    "productsTitle": "Key products & services",
+    "products": {
+      "lighting": "Smart lighting (remote control & automation)",
+      "security": "Security & monitoring (cameras, alerts)",
+      "lock": "Smart door locks",
+      "curtain": "Automated curtains",
+      "audio": "Multi-zone audio",
+      "appliances": "Smart home appliances",
+      "integration": "Tailored smart-home integration"
+    },
+    "visionTitle": "Vision",
+    "visionBody": "To be a leading Vietnamese provider of smart-home solutions and modern appliances, bringing comfortable, safe, and sustainable living to every household.",
+    "missionTitle": "Mission",
+    "mission1": "Deliver high-quality smart-home products with advanced technology.",
+    "mission2": "Improve smart, convenient, and safe living experiences.",
+    "mission3": "Help customers optimise their spaces and save energy.",
+    "mission4": "Offer professional consulting, implementation, and after-sales service.",
+    "directionsTitle": "Strategic focus",
+    "directionsBody": "Become a trusted smart-home partner; diversify smart appliances; align with smart, energy-efficient, and safe housing trends.",
+    "valuesTitle": "Core values",
+    "values": {
+      "quality": {
+        "title": "Quality",
+        "body": "Products and services that meet high standards — reliable and durable."
+      },
+      "customer": {
+        "title": "Customer first",
+        "body": "We listen, understand, and put customers at the centre of what we do."
+      },
+      "innovation": {
+        "title": "Innovation & technology",
+        "body": "We continuously adopt new technology to improve the user experience."
+      },
+      "trust": {
+        "title": "Trust & transparency",
+        "body": "We build confidence through honesty, clarity, and accountability."
+      },
+      "partnership": {
+        "title": "Partnership & growth",
+        "body": "We nurture lasting relationships with partners, customers, and our team."
+      }
+    },
+    "footerCompany": "HUNG VIET SMART HOME CO., LTD",
+    "footerAddress": "160/1/11 Phan Huy Ich, An Hoi Tay Ward, Ho Chi Minh City, Vietnam",
+    "footerTax": "Tax code: 0319301643",
+    "footerPhone": "Phone: 099 999 9999",
+    "footerEmail": "Email: contact@hungvietsmarthome.com",
+    "footerNote": "Content based on the public company website. Contact the company for the latest details."
+  },
   "layout": {
     "sidebar": {
       "appName": "Sale Marketing",

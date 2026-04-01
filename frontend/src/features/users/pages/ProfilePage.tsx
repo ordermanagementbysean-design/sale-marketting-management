@@ -7,6 +7,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import type { SxProps, Theme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
+import { panelPath } from "@/constants/routes";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { useRoles, useUpdateUser } from "../hooks/userHooks";
 
@@ -67,7 +68,7 @@ const ProfilePageComponent = () => {
   );
 
   const goToChangePassword = useCallback(() => {
-    navigate("/profile/change-password");
+    navigate(panelPath("/profile/change-password"));
   }, [navigate]);
 
   if (!user) return null;

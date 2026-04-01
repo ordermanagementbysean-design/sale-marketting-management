@@ -7,6 +7,7 @@ import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import type { SxProps, Theme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
+import { panelPath } from "@/constants/routes";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
@@ -109,7 +110,7 @@ const DashboardPageComponent = () => {
   const navigate = useNavigate();
 
   const goToOrders = useCallback(() => {
-    navigate("/orders");
+    navigate(panelPath("/orders"));
   }, [navigate]);
 
   return (

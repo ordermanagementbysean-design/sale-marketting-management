@@ -13,6 +13,80 @@
     "vi": "Tiếng Việt",
     "en": "English"
   },
+  "notFound": {
+    "documentTitle": "404 — Không tìm thấy trang",
+    "tagline": "Lạc ngoài quỹ đạo",
+    "goHome": "Về trang chủ",
+    "goPanel": "Về panel"
+  },
+  "landing": {
+    "navBrand": "Hưng Việt Smart Home",
+    "officialSite": "Website",
+    "panelLogin": "Đăng nhập hệ thống",
+    "heroKicker": "NHÀ THÔNG MINH · VIỆT NAM",
+    "heroTitle": "Giải pháp smarthome và thiết bị gia dụng thông minh cho không gian sống hiện đại",
+    "heroSubtitle": "Chúng tôi hướng tới trở thành đơn vị cung cấp giải pháp nhà thông minh uy tín, mở rộng thị trường và đáp ứng xu hướng nhà ở thông minh — tiết kiệm năng lượng — an toàn.",
+    "ctaDiscover": "Khám phá giới thiệu",
+    "statsHeading": "Tổng quan nhanh",
+    "statFounded": "Thành lập",
+    "statHQ": "Trụ sở",
+    "statHQValue": "TP. Hồ Chí Minh",
+    "statTeam": "Quy mô nhân sự",
+    "statTeamValue": "~100 người",
+    "statField": "Lĩnh vực",
+    "statFieldShort": "Smarthome & thiết bị thông minh",
+    "aboutTitle": "Giới thiệu Hưng Việt Smart Home",
+    "aboutBody": "Công ty TNHH Hưng Việt Smart Home hoạt động trong lĩnh vực cung cấp thiết bị và giải pháp nhà thông minh (Smart Home) tại Việt Nam, tập trung vào đồ gia dụng và hệ thống tự động hóa cho không gian sống hiện đại.",
+    "aboutBody2": "Định hướng phát triển dựa trên nền tảng công nghệ hiện đại, nâng cao chất lượng cuộc sống qua sản phẩm tiện nghi, an toàn và tiết kiệm năng lượng.",
+    "productsTitle": "Sản phẩm & dịch vụ chính",
+    "products": {
+      "lighting": "Thiết bị chiếu sáng thông minh (điều khiển từ xa, tự động hóa)",
+      "security": "Thiết bị an ninh – giám sát (camera, hệ thống cảnh báo)",
+      "lock": "Khóa cửa thông minh",
+      "curtain": "Rèm cửa tự động",
+      "audio": "Âm thanh đa vùng",
+      "appliances": "Thiết bị điện gia dụng thông minh",
+      "integration": "Giải pháp tích hợp smarthome theo yêu cầu"
+    },
+    "visionTitle": "Tầm nhìn",
+    "visionBody": "Trở thành đơn vị hàng đầu tại Việt Nam trong lĩnh vực giải pháp nhà thông minh và thiết bị gia dụng hiện đại, mang đến không gian sống tiện nghi, an toàn và bền vững cho mọi gia đình.",
+    "missionTitle": "Sứ mệnh",
+    "mission1": "Cung cấp sản phẩm và giải pháp smart home chất lượng cao, ứng dụng công nghệ tiên tiến.",
+    "mission2": "Nâng cao trải nghiệm sống thông minh, tiện lợi và an toàn cho khách hàng.",
+    "mission3": "Đồng hành cùng khách hàng tối ưu hóa không gian sống và tiết kiệm năng lượng.",
+    "mission4": "Dịch vụ tư vấn, thi công và hậu mãi chuyên nghiệp — tận tâm — hiệu quả.",
+    "directionsTitle": "Định hướng",
+    "directionsBody": "Trở thành đơn vị cung cấp giải pháp nhà thông minh uy tín; mở rộng thị trường và đa dạng hóa sản phẩm gia dụng thông minh; đáp ứng xu hướng “nhà ở thông minh – tiết kiệm năng lượng – an toàn”.",
+    "valuesTitle": "Giá trị cốt lõi",
+    "values": {
+      "quality": {
+        "title": "Chất lượng",
+        "body": "Cam kết sản phẩm và dịch vụ đạt tiêu chuẩn cao, bền bỉ và đáng tin cậy."
+      },
+      "customer": {
+        "title": "Khách hàng là trung tâm",
+        "body": "Luôn lắng nghe, thấu hiểu và đặt lợi ích khách hàng lên hàng đầu."
+      },
+      "innovation": {
+        "title": "Đổi mới – Công nghệ",
+        "body": "Không ngừng cập nhật và ứng dụng công nghệ mới để nâng cao trải nghiệm."
+      },
+      "trust": {
+        "title": "Uy tín – Minh bạch",
+        "body": "Xây dựng niềm tin bằng sự trung thực, rõ ràng và trách nhiệm trong từng cam kết."
+      },
+      "partnership": {
+        "title": "Hợp tác – Phát triển",
+        "body": "Tạo dựng mối quan hệ bền vững với đối tác, khách hàng và đội ngũ nội bộ."
+      }
+    },
+    "footerCompany": "CÔNG TY TNHH HƯNG VIỆT SMART HOME",
+    "footerAddress": "160/1/11 Phan Huy Ích, Phường An Hội Tây, Thành phố Hồ Chí Minh, Việt Nam",
+    "footerTax": "MST: 0319301643",
+    "footerPhone": "Điện thoại: 099 999 9999",
+    "footerEmail": "Email: contact@hungvietsmarthome.com",
+    "footerNote": "Nội dung tham khảo website công ty. Liên hệ trực tiếp để được tư vấn chính xác nhất."
+  },
   "layout": {
     "sidebar": {
       "appName": "Sale Marketing",

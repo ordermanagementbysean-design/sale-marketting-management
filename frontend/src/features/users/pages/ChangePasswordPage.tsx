@@ -7,6 +7,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import type { SxProps, Theme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
+import { panelPath } from "@/constants/routes";
 import { changePassword } from "@/features/auth/services/authApi";
 import type { ChangePasswordPayload } from "@/features/auth/services/authApi";
 
@@ -47,7 +48,7 @@ const ChangePasswordPageComponent = () => {
           setOldPassword("");
           setNewPassword("");
           setConfirmPassword("");
-          setTimeout(() => navigate("/profile"), 1500);
+          setTimeout(() => navigate(panelPath("/profile")), 1500);
         })
         .catch((err: unknown) => {
           let msg = t("users.changePasswordError");
@@ -78,7 +79,7 @@ const ChangePasswordPageComponent = () => {
   );
 
   const goBack = useCallback(() => {
-    navigate("/profile");
+    navigate(panelPath("/profile"));
   }, [navigate]);
 
   const isFormValid =

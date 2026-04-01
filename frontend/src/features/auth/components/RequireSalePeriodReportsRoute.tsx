@@ -2,6 +2,7 @@ import { memo, type ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
+import { panelPath } from "@/constants/routes";
 import { useAuth } from "../context/AuthContext";
 
 interface RequireSalePeriodReportsRouteProps {
@@ -32,7 +33,7 @@ const RequireSalePeriodReportsRouteComponent = ({
   }
 
   if (!canViewSalePeriodsAndReports) {
-    return <Navigate to="/profile" replace />;
+    return <Navigate to={panelPath("/profile")} replace />;
   }
 
   return <>{children}</>;

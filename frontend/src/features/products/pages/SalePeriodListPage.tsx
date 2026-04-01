@@ -21,6 +21,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import type { SxProps, Theme } from "@mui/material/styles";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { panelPath } from "@/constants/routes";
 import AddIcon from "@mui/icons-material/Add";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -546,7 +547,7 @@ const SalePeriodListPageComponent = () => {
     [t, canEditProducts, openEdit, openCosts, handleDelete]
   );
 
-  const goToAdd = () => navigate("/products/add-sale-period");
+  const goToAdd = () => navigate(panelPath("/products/add-sale-period"));
 
   return (
     <Box sx={wrapperSx}>
@@ -572,7 +573,7 @@ const SalePeriodListPageComponent = () => {
               variant="outlined"
               size="small"
               component={RouterLink}
-              to="/products/sale-periods/import"
+              to={panelPath("/products/sale-periods/import")}
               startIcon={<UploadFileOutlinedIcon />}
             >
               {t("layout.sidebar.salePeriodImport")}

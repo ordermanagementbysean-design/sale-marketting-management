@@ -1,6 +1,7 @@
 import { type ChangeEvent, memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link as RouterLink } from "react-router-dom";
+import { panelPath } from "@/constants/routes";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -300,7 +301,7 @@ const SalePeriodStatusReportProfitColorsPageComponent = () => {
             <Button variant="outlined" onClick={handleReset} disabled={readOnly || saving}>
               {resetMutation.isPending ? t("users.saving") : t("products.salePeriodStatusReport.profitColors.resetDefaults")}
             </Button>
-            <Button component={RouterLink} to="/products/sale-periods/status-report" variant="text">
+            <Button component={RouterLink} to={panelPath("/products/sale-periods/status-report")} variant="text">
               {t("products.salePeriodStatusReport.profitColors.backToReport")}
             </Button>
           </Stack>

@@ -15,25 +15,26 @@ import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import PaletteOutlinedIcon from "@mui/icons-material/PaletteOutlined";
 // import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
 import { useAuth } from "@/features/auth/context/AuthContext";
+import { panelPath } from "@/constants/routes";
 
 const SIDEBAR_WIDTH = 260;
 
 /** Aligned with backend UserRole::canViewSalePeriodsAndReports() */
 const SALE_PERIOD_REPORT_PATHS = new Set([
-  "/products/sale-periods",
-  "/products/sale-periods/status-report",
+  panelPath("/products/sale-periods"),
+  panelPath("/products/sale-periods/status-report"),
 ]);
 
 const allMenuItems = [
   // { path: "/", labelKey: "layout.sidebar.overview", icon: <DashboardOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
   // { path: "/orders", labelKey: "layout.sidebar.orders", icon: <ShoppingCartOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
-  { path: "/products", labelKey: "layout.sidebar.products", icon: <Inventory2OutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
-  { path: "/products/sale-periods", labelKey: "layout.sidebar.salePeriodList", icon: <CalendarMonthOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
-  { path: "/products/sale-periods/status-report", labelKey: "layout.sidebar.salePeriodStatusReport", icon: <AssessmentOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
-  { path: "/products/sale-periods/status-report/profit-colors", labelKey: "layout.sidebar.salePeriodStatusReportProfitColors", icon: <PaletteOutlinedIcon />, requireManageUsers: true, requireEditProducts: true },
+  { path: panelPath("/products"), labelKey: "layout.sidebar.products", icon: <Inventory2OutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
+  { path: panelPath("/products/sale-periods"), labelKey: "layout.sidebar.salePeriodList", icon: <CalendarMonthOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
+  { path: panelPath("/products/sale-periods/status-report"), labelKey: "layout.sidebar.salePeriodStatusReport", icon: <AssessmentOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
+  { path: panelPath("/products/sale-periods/status-report/profit-colors"), labelKey: "layout.sidebar.salePeriodStatusReportProfitColors", icon: <PaletteOutlinedIcon />, requireManageUsers: true, requireEditProducts: true },
   // { path: "/ai-page-builder", labelKey: "layout.sidebar.aiPageBuilder", icon: <AutoAwesomeOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
-  { path: "/users", labelKey: "layout.sidebar.users", icon: <PeopleOutlinedIcon />, requireManageUsers: true, requireEditProducts: false },
-  { path: "/profile", labelKey: "layout.sidebar.profile", icon: <PersonOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
+  { path: panelPath("/users"), labelKey: "layout.sidebar.users", icon: <PeopleOutlinedIcon />, requireManageUsers: true, requireEditProducts: false },
+  { path: panelPath("/profile"), labelKey: "layout.sidebar.profile", icon: <PersonOutlinedIcon />, requireManageUsers: false, requireEditProducts: false },
 ] as const;
 
 const rootSx: SxProps<Theme> = {

@@ -17,6 +17,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import type { SxProps, Theme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
+import { panelPath } from "@/constants/routes";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { useCreateProduct } from "../hooks/productHooks";
 import { PRODUCT_VIEWER_ROLE_VALUES } from "../types";
@@ -100,7 +101,7 @@ const CreateProductPageComponent = () => {
             : { visibility_allow_all: false, visibility_roles: [...restrictedRoles] }),
         },
         {
-          onSuccess: () => navigate("/products"),
+          onSuccess: () => navigate(panelPath("/products")),
           onError: (err: Error) => {
             const msg = (err as { response?: { data?: { message?: string } } }).response?.data
               ?.message;
@@ -135,7 +136,7 @@ const CreateProductPageComponent = () => {
         <Alert severity="warning" sx={fieldSx}>
           {t("products.createProductPage.noPermission")}
         </Alert>
-        <Button variant="outlined" onClick={() => navigate("/products")}>
+        <Button variant="outlined" onClick={() => navigate(panelPath("/products"))}>
           {t("products.createProductPage.backToProducts")}
         </Button>
       </Box>
@@ -287,7 +288,7 @@ const CreateProductPageComponent = () => {
         <Button type="submit" variant="contained" disabled={createMutation.isPending}>
           {createMutation.isPending ? t("users.saving") : t("products.createProductPage.submit")}
         </Button>
-        <Button variant="outlined" type="button" onClick={() => navigate("/products")}>
+        <Button variant="outlined" type="button" onClick={() => navigate(panelPath("/products"))}>
           {t("users.cancel")}
         </Button>
       </Box>

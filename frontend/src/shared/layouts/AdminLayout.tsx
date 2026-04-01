@@ -5,8 +5,18 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import type { SxProps, Theme } from "@mui/material/styles";
 import { Outlet, useLocation } from "react-router-dom";
+import { PANEL_BASE } from "@/constants/routes";
 import { Sidebar, SIDEBAR_WIDTH } from "./components/Sidebar";
 import { Header } from "./components/Header";
+
+function pathWithinPanel(pathname: string): string {
+  if (pathname.startsWith(PANEL_BASE)) {
+    const rest = pathname.slice(PANEL_BASE.length);
+    if (!rest || rest === "") return "/";
+    return rest.startsWith("/") ? rest : `/${rest}`;
+  }
+  return pathname;
+}
 
 class OutletErrorBoundary extends Component<
   { children: ReactNode; pathname: string },
@@ -85,9 +95,10 @@ const pathToTitleKey: Record<string, string> = {
 const AdminLayoutComponent = () => {
   const { t } = useTranslation();
   const { pathname } = useLocation();
+  const panelRelativePath = pathWithinPanel(pathname);
   const title = useMemo(
-    () => t(pathToTitleKey[pathname] ?? "layout.header.admin"),
-    [pathname, t]
+    () => t(pathToTitleKey[panelRelativePath] ?? "layout.header.admin"),
+    [panelRelativePath, t]
   );
 
   return (

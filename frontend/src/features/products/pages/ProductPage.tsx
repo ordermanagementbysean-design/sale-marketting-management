@@ -34,6 +34,7 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import { Link as RouterLink } from "react-router-dom";
+import { panelPath } from "@/constants/routes";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { isYmdBeforeLocalToday } from "@/shared/utils/localDateYmd";
 import { useMarketingUsersAll } from "@/features/users/hooks/userHooks";
@@ -883,7 +884,7 @@ const ProductPageComponent = () => {
               variant="outlined"
               size="small"
               component={RouterLink}
-              to="/products/import"
+              to={panelPath("/products/import")}
               startIcon={<UploadFileOutlinedIcon />}
             >
               {t("layout.sidebar.productImport")}
@@ -902,7 +903,7 @@ const ProductPageComponent = () => {
               variant="contained"
               size="small"
               component={RouterLink}
-              to="/products/new"
+              to={panelPath("/products/new")}
               startIcon={<AddIcon />}
             >
               {t("products.addProduct")}

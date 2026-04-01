@@ -1,4 +1,5 @@
 import axios from "axios";
+import { panelPath } from "@/constants/routes";
 
 const axiosClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? "",
@@ -25,7 +26,7 @@ export function setAuthToken(token: string | null): void {
 function clearAuthAndRedirect(): void {
   setAuthToken(null);
   localStorage.removeItem(AUTH_TOKEN_KEY);
-  window.location.href = "/login";
+  window.location.href = panelPath("login");
 }
 
 axiosClient.interceptors.response.use(

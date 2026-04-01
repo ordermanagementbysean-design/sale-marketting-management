@@ -8,6 +8,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import type { SxProps, Theme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
+import { panelPath } from "@/constants/routes";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { useMarketingUsersAll } from "@/features/users/hooks/userHooks";
@@ -126,7 +127,9 @@ const AddSalePeriodPageComponent = () => {
           },
           onSuccess: (period) => {
             const goAfterSuccess = () =>
-              navigate(canViewSalePeriodsAndReports ? "/products/sale-periods" : "/products");
+              navigate(
+                canViewSalePeriodsAndReports ? panelPath("/products/sale-periods") : panelPath("/products")
+              );
             const maybeCostThenList = () => {
               if (shouldSkipCostEntryAdsOnly(costForm)) {
                 goAfterSuccess();
@@ -196,7 +199,7 @@ const AddSalePeriodPageComponent = () => {
   }, []);
 
   const goToProducts = useCallback(() => {
-    navigate("/products");
+    navigate(panelPath("/products"));
   }, [navigate]);
 
   const isPending =
@@ -208,7 +211,7 @@ const AddSalePeriodPageComponent = () => {
         <Alert severity="warning" sx={fieldSx}>
           {t("products.addSalePeriodPage.noPermission")}
         </Alert>
-        <Button variant="outlined" onClick={() => navigate("/products")}>
+        <Button variant="outlined" onClick={() => navigate(panelPath("/products"))}>
           {t("products.addSalePeriodPage.backToProducts")}
         </Button>
       </Box>

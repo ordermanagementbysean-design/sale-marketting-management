@@ -8,6 +8,7 @@ import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import type { SxProps, Theme } from "@mui/material/styles";
+import { panelPath } from "@/constants/routes";
 import { useAuth } from "../context/AuthContext";
 
 const wrapperSx: SxProps<Theme> = {
@@ -45,7 +46,7 @@ const LoginPageComponent = () => {
   const [submitting, setSubmitting] = useState(false);
 
   if (isAuthenticated) {
-    return <Navigate to="/profile" replace />;
+    return <Navigate to={panelPath("/profile")} replace />;
   }
   if (isLoading) {
     return (
